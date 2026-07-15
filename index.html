@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mimetika - Conectividad de Estudio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body {
+  margin: 0;
+  padding: 20px 12px 44px 12px;
+  background: #FDF8F3;
+  font-family: 'DM Sans', sans-serif;
+  color: #2C2416;
+}
+.marco {
+  max-width: 1560px;
+  margin: 0 auto;
+}
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2px solid #B85C50;
+  padding-bottom: 9px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cabecera h1 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+.cabecera span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #8B6F47;
+}
+.tablero {
+  display: grid;
+  grid-template-columns: 1fr 262px;
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .tablero {
+    grid-template-columns: 1fr;
+  }
+}
+#lienzoCaja {
+  background: #F5EBE0;
+  border: 1px solid #e2d5c3;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 3px 14px rgba(44,36,22,0.08);
+  overflow: hidden;
+}
+#lienzoCaja svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: grab;
+}
+#lienzoCaja svg.paneando {
+  cursor: grabbing;
+}
+.lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panel {
+  background: #F5EBE0;
+  border: 1px solid #e2d5c3;
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+.panel h2 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #8B6F47;
+  margin: 0 0 8px 0;
+}
+#aviso {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #6b5a3e;
+  min-height: 46px;
+}
+#aviso b {
+  color: #2C2416;
+}
+#aviso em {
+  font-style: normal;
+  color: #5f7350;
+}
+select, input[type=text] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  border: 1px solid #d7c6b0;
+  border-radius: 6px;
+  background: #FDF8F3;
+  color: #2C2416;
+  margin-bottom: 7px;
+}
+.botonera {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+button {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #FDF8F3;
+  background: #B85C50;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 11px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+button.suave {
+  background: #8B6F47;
+}
+button.hueca {
+  background: transparent;
+  color: #8B6F47;
+  border: 1px solid #cbb79c;
+}
+button:hover {
+  background: #9d4a3f;
+}
+button.suave:hover {
+  background: #71592f;
+}
+button.hueca:hover {
+  background: #ede0cf;
+  color: #2C2416;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+button:focus-visible {
+  outline: 3px solid #9BB08F;
+  outline-offset: 2px;
+}
+#resultadoConsigna {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b5a3e;
+  margin-top: 8px;
+}
+#resultadoConsigna b {
+  color: #2C2416;
+}
+#resultadoConsigna ul {
+  margin: 5px 0 0 0;
+  padding-left: 16px;
+}
+#resultadoConsigna li {
+  margin-bottom: 2px;
+}
+.pista {
+  font-size: 11px;
+  color: #9d8a6c;
+  line-height: 1.4;
+  margin-top: 7px;
+}
+.puntaCable {
+  cursor: grab;
+}
+.puntaCable.agarrada {
+  cursor: grabbing;
+}
+.boca {
+  cursor: help;
+}
+.tapaEquipo {
+  cursor: pointer;
+}
+.llaveFantasma {
+  cursor: pointer;
+}
+.pulso {
+  pointer-events: none;
+}
+.pulso.corriendo {
+  opacity: 0.9;
+  animation: correrSenal 0.9s linear infinite;
+}
+@keyframes correrSenal {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -44; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulso.corriendo {
+    animation: none;
+  }
+}
+</style>
+</head>
+<body>
+<div class="marco">
+  <div class="cabecera">
+    <h1>Conectividad de Estudio</h1>
+    <span>MIMETIKA &middot; Estudio v1</span>
+  </div>
+  <div class="tablero">
+    <div id="lienzoCaja"></div>
+    <div class="lateral">
+      <div class="panel">
+        <h2>Estado</h2>
+        <div id="aviso"></div>
+      </div>
+      <div class="panel">
+        <h2>Consigna</h2>
+        <select id="selectorConsigna"></select>
+        <div class="botonera">
+          <button id="botonVerificar" type="button">Verificar</button>
+          <button id="botonResolver" type="button" class="suave">Resolver</button>
+        </div>
+        <div id="resultadoConsigna"></div>
+      </div>
+      <div class="panel">
+        <h2>Vista</h2>
+        <div class="botonera">
+          <button id="botonEsquema" type="button" class="suave">Ver diagrama de bloques</button>
+        </div>
+        <div class="botonera" style="margin-top:6px">
+          <button id="botonAcercar" type="button" class="hueca">Zoom +</button>
+          <button id="botonAlejar" type="button" class="hueca">Zoom &minus;</button>
+          <button id="botonEncuadrar" type="button" class="hueca">Encuadrar</button>
+        </div>
+        <p class="pista"> La rueda del mouse genera zoom, arrastr&aacute; el fondo para desplazar. Toc&aacute; un equipo para ver correr la se&ntilde;al.</p>
+      </div>
+      <div class="panel">
+        <h2>Exportar</h2>
+        <div class="botonera">
+          <button id="botonPng" type="button" class="hueca">PNG</button>
+          <button id="botonSvg" type="button" class="hueca">SVG</button>
+          <button id="botonPdf" type="button" class="hueca">PDF</button>
+          <button id="botonTxt" type="button" class="hueca">Patch list</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Patch</h2>
+        <input type="text" id="nombrePreset" placeholder="Nombre del patch" maxlength="40">
+        <div class="botonera">
+          <button id="botonGuardar" type="button" class="suave">Guardar</button>
+          <button id="botonSoltar" type="button">Soltar todo</button>
+        </div>
+        <select id="selectorPreset"></select>
+        <div class="botonera">
+          <button id="botonCargar" type="button" class="hueca">Cargar</button>
+          <button id="botonBorrar" type="button" class="hueca">Borrar</button>
+        </div>
+        <div class="botonera" style="margin-top:6px">
+          <button id="botonDeshacer" type="button" class="hueca">&#8630; Deshacer</button>
+          <button id="botonRehacer" type="button" class="hueca">&#8631; Rehacer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var NS = "http://www.w3.org/2000/svg";
+var puntosConexion = [];
+var cables = [];
+var arrastre = null;
+var paneo = null;
+var lienzo = null;
+var avisoCaja = null;
+var ultimoDetalle = "";
+var tintaCable = "#2C2416";
+var pilaAtras = [];
+var pilaAdelante = [];
+var baseDatos = null;
+var equipoIluminado = "";
+var enEsquema = false;
+var vista = { x: 0, y: 0, w: 2040, h: 1200 };
+var lucesDiagnostico = {};
+var fantasmas = [false, false, false, false, false, false, false, false];
+var llavesFantasma = [];
+
+var cadenaMonitoreo = [
+  ["ctrlRoomIzq", "monitorIzq"],
+  ["ctrlRoomDer", "monitorDer"]
+];
+
+var cadenaReproduccion = [
+  ["salidaGrabador1", "canal1TapeIn"],
+  ["salidaGrabador2", "canal2TapeIn"],
+  ["salidaGrabador3", "canal3TapeIn"],
+  ["salidaGrabador4", "canal4TapeIn"],
+  ["salidaGrabador5", "canal5TapeIn"],
+  ["salidaGrabador6", "canal6TapeIn"],
+  ["salidaGrabador7", "canal7TapeIn"],
+  ["salidaGrabador8", "canal8TapeIn"]
+];
+
+var cadenaUsb = [
+  ["usbGrabador", "usbTorre"]
+];
+
+var cadenaParalelo = [
+  ["auxSend1", "reverbEntradaIzq"],
+  ["reverbSalidaIzq", "canal7LineIn"],
+  ["reverbSalidaDer", "canal8LineIn"]
+];
+
+var cadenaSerie = [
+  { insert: "canal1Insert", entra: "compresorEntrada1", vuelve: "compresorSalida1" },
+  { insert: "canal4Insert", entra: "compresorEntrada2", vuelve: "compresorSalida2" }
+];
+
+var consignas = [
+  {
+    id: "todo",
+    titulo: "Estudio completo",
+    detalle: "Los cinco objetivos del diagn\u00f3stico armados de una.",
+    rutas: cadenaMonitoreo.concat(cadenaReproduccion, cadenaUsb, cadenaParalelo),
+    conSerie: true
+  },
+  {
+    id: "monitoreo",
+    titulo: "Monitoreo",
+    detalle: "Control Room Out al sistema de monitoreo activo. Los monitores son activos: llevan l\u00ednea y su propia alimentaci\u00f3n, no hay amplificador de potencia.",
+    rutas: cadenaMonitoreo
+  },
+  {
+    id: "reproduccion",
+    titulo: "Reproducci\u00f3n de se\u00f1al",
+    detalle: "Rec Device Out 1 a 8 hacia los Tape In de la consola.",
+    rutas: cadenaReproduccion
+  },
+  {
+    id: "usb",
+    titulo: "Conexi\u00f3n USB",
+    detalle: "La computadora al dispositivo de grabaci\u00f3n.",
+    rutas: cadenaUsb
+  },
+  {
+    id: "paralelo",
+    titulo: "Proceso en paralelo: reverb",
+    detalle: "Env\u00edo Aux 1 al reverb, con retorno al Line In de los canales 7 y 8. El seco sigue por su canal: por eso es paralelo, y parametro Mix del procesador de reverb va al 100 por ciento.",
+    rutas: cadenaParalelo
+  },
+  {
+    id: "serie",
+    titulo: "Proceso en serie: din\u00e1mica",
+    detalle: "Procesador de din\u00e1mica a los canales 1 y 4 por el Insert, con cable Y. Toda la se\u00f1al del canal atraviesa el aparato: eso es serie.",
+    rutas: [],
+    conSerie: true,
+    soloSerie: true
+  }
+];
+
+function nodo(tipo, atrs, padre) {
+  var el = document.createElementNS(NS, tipo);
+  for (var clave in atrs) {
+    el.setAttribute(clave, atrs[clave]);
+  }
+  if (padre) {
+    padre.appendChild(el);
+  }
+  return el;
+}
+
+function texto(padre, x, y, contenido, op) {
+  op = op || {};
+  var t = nodo("text", {
+    x: x,
+    y: y,
+    "font-family": op.fuente || "'DM Sans', sans-serif",
+    "font-size": op.tam || 11,
+    "font-weight": op.peso || 700,
+    "fill": op.color || "#1c1c1c",
+    "text-anchor": op.ancla || "middle",
+    "letter-spacing": op.esp || 0
+  }, padre);
+  t.textContent = contenido;
+  return t;
+}
+
+function degradado(defs, id, paradas, vertical) {
+  var g = nodo("linearGradient", {
+    id: id,
+    x1: "0%", y1: "0%",
+    x2: vertical ? "0%" : "100%",
+    y2: vertical ? "100%" : "0%"
+  }, defs);
+  for (var i = 0; i < paradas.length; i++) {
+    nodo("stop", { offset: paradas[i][0], "stop-color": paradas[i][1] }, g);
+  }
+}
+
+function degradadoRadial(defs, id, paradas) {
+  var g = nodo("radialGradient", { id: id, cx: "40%", cy: "35%", r: "75%" }, defs);
+  for (var i = 0; i < paradas.length; i++) {
+    nodo("stop", { offset: paradas[i][0], "stop-color": paradas[i][1] }, g);
+  }
+}
+
+function armarDefiniciones(svg) {
+  var defs = nodo("defs", {}, svg);
+  degradado(defs, "gabinete", [["0%", "#AEB6BA"], ["100%", "#6F787C"]], true);
+  degradado(defs, "panelNegro", [["0%", "#565B5E"], ["55%", "#1c1e1f"], ["100%", "#0b0b0b"]], true);
+  degradado(defs, "rojoExterno", [["0%", "#DA867F"], ["100%", "#BE5850"]], true);
+  degradado(defs, "rojoInterno", [["0%", "#D3746D"], ["100%", "#B54F48"]], true);
+  degradado(defs, "franjaVerde", [["0%", "#D8E9C4"], ["100%", "#ADCA90"]], true);
+  degradado(defs, "azulEfecto", [["0%", "#C6D4E2"], ["100%", "#7F97AD"]], true);
+  degradado(defs, "franjaNaranja", [["0%", "#F9D49E"], ["100%", "#E8A25C"]], true);
+  degradado(defs, "metalFicha", [["0%", "#f4f4f4"], ["100%", "#b5b5b5"]], true);
+  degradado(defs, "metalClaro", [["0%", "#efefef"], ["100%", "#c3c3c3"]], true);
+  degradado(defs, "metalMic", [["0%", "#e8e8e8"], ["45%", "#9c9c9c"], ["100%", "#5f5f5f"]], false);
+  degradado(defs, "rejillaMic", [["0%", "#8d8d8d"], ["50%", "#3a3a3a"], ["100%", "#111111"]], false);
+  degradado(defs, "grisTorre", [["0%", "#dcdcdc"], ["100%", "#a6a6a6"]], true);
+  degradado(defs, "pantallaAzul", [["0%", "#BDDBF4"], ["100%", "#7DB1E0"]], true);
+  degradado(defs, "maderaRack", [["0%", "#A67B5B"], ["100%", "#7d5a3e"]], false);
+  degradado(defs, "cremaPanel", [["0%", "#FDF8F3"], ["100%", "#EEDFCB"]], true);
+  degradado(defs, "bandejaOscura", [["0%", "#3b3226"], ["100%", "#221c13"]], true);
+  degradadoRadial(defs, "conoParlante", [["0%", "#e2e2e2"], ["70%", "#b0b0b0"], ["100%", "#828282"]]);
+  degradadoRadial(defs, "domoParlante", [["0%", "#f2f2f2"], ["100%", "#9a9a9a"]]);
+  degradadoRadial(defs, "domoTweeter", [["0%", "#d6d6d6"], ["100%", "#4e4e4e"]]);
+  var caja = nodo("filter", {
+    id: "sombraEquipo",
+    x: "-15%", y: "-30%", width: "130%", height: "180%"
+  }, defs);
+  nodo("feDropShadow", {
+    dx: 5, dy: 9, stdDeviation: 6,
+    "flood-color": "#2C2416", "flood-opacity": 0.34
+  }, caja);
+  var mueble = nodo("filter", {
+    id: "sombraRack",
+    x: "-14%", y: "-8%", width: "128%", height: "118%"
+  }, defs);
+  nodo("feDropShadow", {
+    dx: 7, dy: 11, stdDeviation: 8,
+    "flood-color": "#2C2416", "flood-opacity": 0.38
+  }, mueble);
+  var punta = nodo("marker", {
+    id: "puntaFlecha", viewBox: "0 0 10 10", refX: 8.5, refY: 5,
+    markerWidth: 5, markerHeight: 5, orient: "auto-start-reverse",
+    markerUnits: "strokeWidth"
+  }, defs);
+  nodo("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "#8B6F47" }, punta);
+}
+
+function anotarPunto(id, x, y, tipo, rotulo, equipo, flujo) {
+  puntosConexion.push({
+    id: id,
+    x: x,
+    y: y,
+    tipo: tipo,
+    rotulo: rotulo,
+    equipo: equipo,
+    flujo: flujo,
+    tomadoPor: null
+  });
+}
+
+function buscarPunto(id) {
+  for (var i = 0; i < puntosConexion.length; i++) {
+    if (puntosConexion[i].id === id) {
+      return puntosConexion[i];
+    }
+  }
+  return null;
+}
+
+function buscarCable(id) {
+  for (var i = 0; i < cables.length; i++) {
+    if (cables[i].id === id) {
+      return cables[i];
+    }
+  }
+  return null;
+}
+
+function ficha(padre, cx, cy, r, idPunto, rotulo, equipo, flujo) {
+  r = r || 8;
+  nodo("circle", { cx: cx, cy: cy, r: r, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 1 }, padre);
+  nodo("circle", { cx: cx, cy: cy, r: r * 0.52, fill: "#0d0d0d" }, padre);
+  nodo("circle", { cx: cx - r * 0.3, cy: cy - r * 0.32, r: r * 0.15, fill: "rgba(255,255,255,0.55)" }, padre);
+  if (idPunto) {
+    anotarPunto(idPunto, cx, cy, "trs", rotulo, equipo, flujo);
+  }
+}
+
+function fichaCanon(padre, cx, cy, idPunto, rotulo, equipo, flujo) {
+  nodo("circle", { cx: cx, cy: cy, r: 15.5, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 1.4 }, padre);
+  nodo("circle", { cx: cx, cy: cy, r: 12, fill: "#dedede", stroke: "#7a7a7a", "stroke-width": 0.8 }, padre);
+  nodo("circle", { cx: cx - 5, cy: cy + 4.2, r: 2.5, fill: "#181818" }, padre);
+  nodo("circle", { cx: cx + 5, cy: cy + 4.2, r: 2.5, fill: "#181818" }, padre);
+  nodo("circle", { cx: cx, cy: cy - 5.4, r: 2.5, fill: "#181818" }, padre);
+  if (idPunto) {
+    anotarPunto(idPunto, cx, cy, "xlr3", rotulo, equipo, flujo);
+  }
+}
+
+function tornillo(padre, cx, cy) {
+  nodo("circle", { cx: cx, cy: cy, r: 6, fill: "url(#metalFicha)", stroke: "#555", "stroke-width": 1 }, padre);
+  nodo("line", { x1: cx - 3.4, y1: cy - 3.4, x2: cx + 3.4, y2: cy + 3.4, stroke: "#3a3a3a", "stroke-width": 1.4 }, padre);
+  nodo("line", { x1: cx - 3.4, y1: cy + 3.4, x2: cx + 3.4, y2: cy - 3.4, stroke: "#3a3a3a", "stroke-width": 1.4 }, padre);
+}
+
+function tomaElectrica(padre, x, y) {
+  nodo("rect", { x: x, y: y, width: 48, height: 34, rx: 4, fill: "url(#metalClaro)", stroke: "#4a4a4a", "stroke-width": 1.2 }, padre);
+  var d = "M " + (x + 8) + " " + (y + 11) +
+          " L " + (x + 14) + " " + (y + 5) +
+          " L " + (x + 34) + " " + (y + 5) +
+          " L " + (x + 40) + " " + (y + 11) +
+          " L " + (x + 40) + " " + (y + 29) +
+          " L " + (x + 8) + " " + (y + 29) + " Z";
+  nodo("path", { d: d, fill: "#1e1e1e", stroke: "#000", "stroke-width": 0.8 }, padre);
+  nodo("rect", { x: x + 13, y: y + 14, width: 3.6, height: 10, rx: 1, fill: "#cfcfcf" }, padre);
+  nodo("rect", { x: x + 22.2, y: y + 10, width: 3.6, height: 10, rx: 1, fill: "#cfcfcf" }, padre);
+  nodo("rect", { x: x + 31.4, y: y + 14, width: 3.6, height: 10, rx: 1, fill: "#cfcfcf" }, padre);
+}
+
+function puertoUsb(padre, x, y, idPunto, rotulo, equipo) {
+  nodo("rect", { x: x, y: y, width: 22, height: 32, rx: 5, fill: "url(#metalClaro)", stroke: "#555", "stroke-width": 1.1 }, padre);
+  nodo("rect", { x: x + 6.5, y: y + 8, width: 9, height: 16, rx: 2, fill: "#141414" }, padre);
+  nodo("rect", { x: x + 8.5, y: y + 12, width: 5, height: 8, fill: "#e9e9e9" }, padre);
+  if (idPunto) {
+    anotarPunto(idPunto, x + 11, y + 16, "usb", rotulo, equipo, "datos");
+  }
+}
+
+function cartel(padre, x, y, ancho, alto, lineas, tam) {
+  nodo("rect", { x: x + 2, y: y + 2.5, width: ancho, height: alto, rx: 4, fill: "rgba(0,0,0,0.18)" }, padre);
+  nodo("rect", { x: x, y: y, width: ancho, height: alto, rx: 4, fill: "#ffffff", stroke: "#8f8f8f", "stroke-width": 1 }, padre);
+  var salto = tam * 1.3;
+  var arranque = y + alto / 2 - (lineas.length - 1) * salto / 2 + tam * 0.35;
+  for (var i = 0; i < lineas.length; i++) {
+    texto(padre, x + ancho / 2, arranque + i * salto, lineas[i], { tam: tam });
+  }
+}
+
+function perilla(padre, cx, cy, r, rotulo, tono, cuerpo) {
+  nodo("circle", { cx: cx, cy: cy, r: r + 2, fill: "rgba(0,0,0,0.18)" }, padre);
+  nodo("circle", { cx: cx, cy: cy, r: r, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 1.2 }, padre);
+  nodo("circle", { cx: cx, cy: cy, r: r * 0.62, fill: "#2b2b2b" }, padre);
+  nodo("line", { x1: cx, y1: cy, x2: cx + r * 0.72, y2: cy - r * 0.5, stroke: "#f0f0f0", "stroke-width": 2, "stroke-linecap": "round" }, padre);
+  if (rotulo) {
+    texto(padre, cx, cy + r + 12, rotulo, { tam: cuerpo || 7.5, esp: 0.8, color: tono || "#1c1c1c" });
+  }
+}
+function monitorActivo(capa, xParlante, xPanel, lineas, idEntrada, rotulo) {
+  var g = nodo("g", {}, capa);
+  nodo("rect", { x: xParlante, y: 8, width: 165, height: 226, rx: 12, fill: "url(#gabinete)", stroke: "#3c4245", "stroke-width": 2 }, g);
+  var cxT = xParlante + 82;
+  nodo("circle", { cx: cxT, cy: 54, r: 25, fill: "#262626" }, g);
+  nodo("circle", { cx: cxT, cy: 54, r: 18, fill: "url(#domoTweeter)" }, g);
+  nodo("circle", { cx: cxT, cy: 54, r: 7, fill: "#111" }, g);
+  nodo("circle", { cx: cxT, cy: 158, r: 61, fill: "#232323" }, g);
+  nodo("circle", { cx: cxT, cy: 158, r: 51, fill: "#484848" }, g);
+  nodo("circle", { cx: cxT, cy: 158, r: 42, fill: "url(#conoParlante)" }, g);
+  nodo("circle", { cx: cxT, cy: 158, r: 16, fill: "url(#domoParlante)" }, g);
+
+  nodo("rect", { x: xPanel, y: 8, width: 165, height: 226, rx: 22, fill: "url(#panelNegro)", stroke: "#141414", "stroke-width": 2 }, g);
+  cartel(g, xPanel + 22, 24, 121, 62, lineas, 11.5);
+  texto(g, xPanel + 82, 104, "INPUT", { tam: 8, esp: 2, color: "#cfcfcf" });
+  ficha(g, xPanel + 82, 132, 9, idEntrada, rotulo, "monitores", "entrada");
+  perilla(g, xPanel + 34, 172, 14, "NIVEL", "#f1e6d4", 9);
+  nodo("circle", { cx: xPanel + 130, cy: 168, r: 5, fill: "#9BB08F", stroke: "#0e0e0e", "stroke-width": 1 }, g);
+  texto(g, xPanel + 130, 186, "ON", { tam: 7.5, color: "#cfcfcf" });
+  tomaElectrica(g, xPanel + 58, 196);
+  return g;
+}
+
+function armarMonitores(capa) {
+  var g = nodo("g", { id: "grupoMonitores", filter: "url(#sombraEquipo)" }, capa);
+  monitorActivo(g, 20, 190, ["Sistema de", "Monitoreo", "(Left)"], "monitorIzq", "Monitor Activo Left Input");
+  monitorActivo(g, 380, 550, ["Sistema de", "Monitoreo", "(Right)"], "monitorDer", "Monitor Activo Right Input");
+}
+
+function dibujarMicrofono(padre, cx, numero) {
+  nodo("rect", { x: cx - 20, y: 34, width: 40, height: 6, rx: 2, fill: "#4d4d4d" }, padre);
+  nodo("path", {
+    d: "M " + (cx - 19) + " 40 Q " + (cx - 31) + " 96 " + (cx - 19) + " 152",
+    fill: "none", stroke: "#5c5c5c", "stroke-width": 3.2
+  }, padre);
+  nodo("path", {
+    d: "M " + (cx + 19) + " 40 Q " + (cx + 31) + " 96 " + (cx + 19) + " 152",
+    fill: "none", stroke: "#5c5c5c", "stroke-width": 3.2
+  }, padre);
+  nodo("rect", { x: cx - 16, y: 44, width: 32, height: 46, rx: 14, fill: "url(#rejillaMic)", stroke: "#111", "stroke-width": 1.2 }, padre);
+  var f;
+  for (f = 0; f < 6; f++) {
+    nodo("line", {
+      x1: cx - 14, y1: 52 + f * 7, x2: cx + 14, y2: 52 + f * 7,
+      stroke: "rgba(220,220,220,0.28)", "stroke-width": 1
+    }, padre);
+  }
+  nodo("rect", { x: cx - 13, y: 90, width: 26, height: 62, rx: 4, fill: "url(#metalMic)", stroke: "#3d3d3d", "stroke-width": 1.2 }, padre);
+  nodo("rect", { x: cx - 14, y: 106, width: 28, height: 5, rx: 1, fill: "#2f2f2f" }, padre);
+  nodo("rect", { x: cx - 11, y: 120, width: 22, height: 12, rx: 2, fill: "#f2ece2", stroke: "#5c5c5c", "stroke-width": 0.8 }, padre);
+  texto(padre, cx, 129, "M" + numero, { tam: 7.5, color: "#2C2416" });
+  nodo("rect", { x: cx - 11, y: 150, width: 22, height: 12, rx: 2, fill: "#454545", stroke: "#2b2b2b", "stroke-width": 1 }, padre);
+  fichaCanon(padre, cx, 178, "microfono" + numero, "Micr\u00f3fono " + numero + " (condensador)", "microfonos", "salida");
+  cartel(padre, cx - 30, 198, 60, 22, ["Mic " + numero], 9.5);
+}
+
+function armarMicrofonos(capa) {
+  var g = nodo("g", { id: "grupoMicrofonos", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 740, y: 8, width: 420, height: 230, rx: 12, fill: "url(#gabinete)", stroke: "#3c4245", "stroke-width": 2 }, g);
+  nodo("rect", { x: 752, y: 18, width: 396, height: 210, rx: 8, fill: "none", stroke: "rgba(255,255,255,0.18)", "stroke-width": 1 }, g);
+  var cx = [792, 897, 1002, 1107];
+  for (var i = 0; i < 4; i++) {
+    dibujarMicrofono(g, cx[i], i + 1);
+  }
+}
+
+function tiraCompresor(padre, x, numero) {
+  nodo("rect", { x: x, y: 296, width: 140, height: 88, rx: 8, fill: "rgba(0,0,0,0.08)", stroke: "#a06c3a", "stroke-width": 1.2 }, padre);
+  texto(padre, x + 70, 314, "CANAL " + numero, { tam: 8.5, esp: 1.4 });
+  texto(padre, x + 35, 334, "INPUT", { tam: 7.5, esp: 1.2 });
+  ficha(padre, x + 35, 354, 8.5, "compresorEntrada" + numero, "Procesador Din\u00e1mica Canal " + numero + " Input", "compresor", "entrada");
+  texto(padre, x + 105, 334, "OUTPUT", { tam: 7.5, esp: 1.2 });
+  ficha(padre, x + 105, 354, 8.5, "compresorSalida" + numero, "Procesador Din\u00e1mica Canal " + numero + " Output", "compresor", "salida");
+  texto(padre, x + 70, 376, "", { tam: 6.5, peso: 400, color: "#6b4f2a" });
+}
+
+function armarCompresor(capa) {
+  var g = nodo("g", { id: "grupoCompresor", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 15, y: 270, width: 565, height: 140, rx: 10, fill: "url(#franjaNaranja)", stroke: "#b3793e", "stroke-width": 1.6 }, g);
+  tornillo(g, 32, 340);
+  cartel(g, 46, 302, 132, 62, ["Procesador de", "Se\u00f1al", "(Din\u00e1mica/Compresor)"], 9);
+  tornillo(g, 192, 340);
+  tiraCompresor(g, 206, 1);
+  tiraCompresor(g, 356, 2);
+  tomaElectrica(g, 510, 322);
+  texto(g, 534, 368, "Panel posterior", { tam: 6.5, peso: 400, color: "#6b4f2a" });
+}
+
+function armarReverb(capa) {
+  var g = nodo("g", { id: "grupoReverb", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 600, y: 270, width: 560, height: 140, rx: 10, fill: "url(#azulEfecto)", stroke: "#5d7186", "stroke-width": 1.6 }, g);
+  tornillo(g, 616, 340);
+  cartel(g, 626, 300, 122, 60, ["Procesador de", "Se\u00f1al", "(Reverb)"], 9.5);
+  tornillo(g, 760, 340);
+
+  nodo("rect", { x: 766, y: 288, width: 104, height: 38, rx: 4, fill: "#141a12", stroke: "#3a3a3a", "stroke-width": 1.2 }, g);
+  texto(g, 818, 312, "HALL 2.4s", { fuente: "'JetBrains Mono', monospace", tam: 13, color: "#9BB08F" });
+  perilla(g, 790, 372, 12, "MIX");
+  perilla(g, 846, 372, 12, "DECAY");
+
+  texto(g, 918, 296, "INPUT", { tam: 8.5, esp: 2 });
+  ficha(g, 900, 316, 8.5, "reverbEntradaIzq", "Reverb Input L", "reverb", "entrada");
+  ficha(g, 936, 316, 8.5, "reverbEntradaDer", "Reverb Input R", "reverb", "entrada");
+  texto(g, 898, 337, "L (Mono)", { tam: 7 });
+  texto(g, 940, 337, "R", { tam: 7.5 });
+
+  texto(g, 1030, 296, "OUTPUT", { tam: 8.5, esp: 2 });
+  ficha(g, 1012, 316, 8.5, "reverbSalidaIzq", "Reverb Output L", "reverb", "salida");
+  ficha(g, 1048, 316, 8.5, "reverbSalidaDer", "Reverb Output R", "reverb", "salida");
+  texto(g, 1012, 337, "L", { tam: 7.5 });
+  texto(g, 1048, 337, "R", { tam: 7.5 });
+
+  tomaElectrica(g, 962, 358);
+  texto(g, 1085, 374, "Mix 100% en WET", { tam: 8, esp: 1.4, color: "#31424f" });
+  }
+function llaveFantasma(padre, canal, bx) {
+  var g = nodo("g", { class: "llaveFantasma" }, padre);
+  var cuerpo = nodo("rect", {
+    x: bx - 3, y: 480, width: 60, height: 16, rx: 3,
+    fill: "#3a2a24", stroke: "#7e332e", "stroke-width": 1
+  }, g);
+  var foco = nodo("circle", { cx: bx + 6, cy: 488, r: 3.4, fill: "#4a3a30" }, g);
+  var letra = texto(g, bx + 32, 491.5, "+48V", { tam: 7.5, color: "rgba(246,228,224,0.55)", esp: 0.6 });
+  var t = nodo("title", {}, g);
+  t.textContent = "Alimentaci\u00f3n fantasma del canal " + canal;
+  llavesFantasma[canal - 1] = { cuerpo: cuerpo, foco: foco, letra: letra };
+  g.addEventListener("click", function () {
+    tocarFantasma(canal - 1);
+  });
+}
+
+function pintarFantasma(indice) {
+  var llave = llavesFantasma[indice];
+  if (!llave) {
+    return;
+  }
+  var vivo = fantasmas[indice];
+  llave.cuerpo.setAttribute("fill", vivo ? "#B85C50" : "#3a2a24");
+  llave.foco.setAttribute("fill", vivo ? "#F5EBE0" : "#4a3a30");
+  llave.letra.setAttribute("fill", vivo ? "#FDF8F3" : "rgba(246,228,224,0.55)");
+}
+
+function tocarFantasma(indice) {
+  fantasmas[indice] = !fantasmas[indice];
+  pintarFantasma(indice);
+  var mic = buscarPunto("canal" + (indice + 1) + "MicIn");
+  if (fantasmas[indice]) {
+    ultimoDetalle = mic.tomadoPor
+      ? "+48V arriba en el canal " + (indice + 1) + ": el condensador ya trabaja"
+      : "+48V arriba en el canal " + (indice + 1) + ", pero no hay micr\u00f3fono conectado";
+  } else {
+    ultimoDetalle = mic.tomadoPor
+      ? "+48V abajo en el canal " + (indice + 1) + ": el condensador se queda sin se\u00f1al"
+      : "+48V abajo en el canal " + (indice + 1);
+  }
+  revisarTodo();
+}
+
+function parIzqDer(padre, x1, x2, y, idIzq, idDer, rotulo) {
+  ficha(padre, x1, y, 8, idIzq, rotulo + " L", "consola", idIzq.indexOf("mainMix") === 0 || idIzq.indexOf("ctrlRoom") === 0 ? "salida" : "entrada");
+  ficha(padre, x2, y, 8, idDer, rotulo + " R", "consola", idDer.indexOf("mainMix") === 0 || idDer.indexOf("ctrlRoom") === 0 ? "salida" : "entrada");
+  texto(padre, x1, y + 16, "L", { tam: 7, color: "#f6e4e0" });
+  texto(padre, x2, y + 16, "R", { tam: 7, color: "#f6e4e0" });
+}
+
+function armarConsola(capa) {
+  var g = nodo("g", { id: "grupoConsola", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 15, y: 440, width: 1145, height: 350, rx: 20, fill: "url(#rojoExterno)", stroke: "#8f3d38", "stroke-width": 2 }, g);
+  nodo("rect", { x: 33, y: 453, width: 1109, height: 324, rx: 15, fill: "url(#rojoInterno)", stroke: "#8f3d38", "stroke-width": 1.5 }, g);
+
+  nodo("rect", { x: 48, y: 490, width: 86, height: 206, rx: 10, fill: "rgba(0,0,0,0.07)", stroke: "#7e332e", "stroke-width": 1.3 }, g);
+  texto(g, 91, 505, "2 - Track", { tam: 9 });
+  parIzqDer(g, 72, 110, 523, "dosTrackIzq", "dosTrackDer", "2-Track");
+  texto(g, 91, 555, "External", { tam: 9 });
+  parIzqDer(g, 72, 110, 573, "externalIzq", "externalDer", "External");
+  texto(g, 91, 605, "Main Mix Out", { tam: 8.4 });
+  parIzqDer(g, 72, 110, 623, "mainMixIzq", "mainMixDer", "Main Mix Out");
+  texto(g, 91, 655, "Ctrl Room Out", { tam: 8.4 });
+  parIzqDer(g, 72, 110, 673, "ctrlRoomIzq", "ctrlRoomDer", "Ctrl Room Out");
+
+  nodo("rect", { x: 146, y: 490, width: 270, height: 88, rx: 10, fill: "rgba(0,0,0,0.07)", stroke: "#7e332e", "stroke-width": 1.3 }, g);
+  texto(g, 281, 506, "Aux Returns", { tam: 10 });
+  texto(g, 158, 531, "L", { tam: 7, color: "#f6e4e0" });
+  texto(g, 158, 559, "R", { tam: 7, color: "#f6e4e0" });
+  var i;
+  for (i = 0; i < 8; i++) {
+    var ax = 178 + i * 31;
+    texto(g, ax, 518, "" + (i + 1), { tam: 7, color: "#f6e4e0" });
+    ficha(g, ax, 528, 8, "auxReturnIzq" + (i + 1), "Aux Return " + (i + 1) + " L", "consola", "entrada");
+    ficha(g, ax, 556, 8, "auxReturnDer" + (i + 1), "Aux Return " + (i + 1) + " R", "consola", "entrada");
+  }
+
+  texto(g, 269, 602, "SubGroup Insert", { tam: 10 });
+  for (i = 0; i < 8; i++) {
+    var sx = 165 + i * 31;
+    ficha(g, sx, 622, 8, "subgrupoInsert" + (i + 1), "SubGroup Insert " + (i + 1), "consola", "insert");
+    texto(g, sx, 640, "" + (i + 1), { tam: 7, color: "#f6e4e0" });
+  }
+
+  texto(g, 293, 658, "Aux Sends", { tam: 10 });
+  for (i = 0; i < 6; i++) {
+    var ex = 218 + i * 30;
+    ficha(g, ex, 676, 8, "auxSend" + (i + 1), "Aux Send " + (i + 1), "consola", "salida");
+    texto(g, ex, 694, "" + (i + 1), { tam: 7, color: "#f6e4e0" });
+  }
+
+  var rotulos = ["Rec Out", "Insert", "Line In", "Tape In"];
+  var claves = ["RecOut", "Insert", "LineIn", "TapeIn"];
+  var corrientes = ["salida", "insert", "entrada", "entrada"];
+  var altoFicha = [562, 594, 626, 658];
+  for (var c = 0; c < 8; c++) {
+    var bx = 440 + c * 88;
+    var numero = 8 - c;
+    nodo("rect", { x: bx, y: 502, width: 36, height: 176, rx: 9, fill: "rgba(0,0,0,0.07)", stroke: "#7e332e", "stroke-width": 1.3 }, g);
+    var cx = bx + 18;
+    nodo("rect", { x: bx - 3, y: 460, width: 60, height: 15, rx: 3, fill: "rgba(0,0,0,0.16)", stroke: "#7e332e", "stroke-width": 1 }, g);
+    texto(g, bx + 27, 471, "Canal " + numero, { tam: 8.8, color: "#f6e4e0", esp: 0.4 });
+    llaveFantasma(g, numero, bx);
+    fichaCanon(g, cx, 520, "canal" + numero + "MicIn", "Canal " + numero + " Mic In", "consola", "entrada");
+    texto(g, bx + 42, 523, "Mic In", { tam: 8.4, ancla: "start" });
+    for (var f = 0; f < 4; f++) {
+      ficha(g, cx, altoFicha[f], 8, "canal" + numero + claves[f], "Canal " + numero + " " + rotulos[f], "consola", corrientes[f]);
+      texto(g, bx + 42, altoFicha[f] + 3, rotulos[f], { tam: 8.4, ancla: "start" });
+    }
+  }
+
+  tomaElectrica(g, 60, 712);
+  tornillo(g, 138, 730);
+  cartel(g, 152, 706, 118, 48, ["Consola Anal\u00f3gica", "de Estudio"], 10);
+  tornillo(g, 284, 730);
+}
+
+function armarGrabador(capa) {
+  var g = nodo("g", { id: "grupoInterfaz", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 15, y: 810, width: 1145, height: 135, rx: 12, fill: "url(#franjaVerde)", stroke: "#6f8f55", "stroke-width": 1.8 }, g);
+  tomaElectrica(g, 30, 860);
+  tornillo(g, 96, 877);
+  cartel(g, 110, 852, 106, 50, ["Dispositivo de", "Grabaci\u00f3n sin", "Soporte"], 9.5);
+  tornillo(g, 232, 877);
+  puertoUsb(g, 248, 861, "usbGrabador", "USB del Dispositivo de Grabaci\u00f3n", "grabador");
+  texto(g, 300, 856, "OUTPUTS", { tam: 9, esp: 2.4, ancla: "start" });
+  texto(g, 300, 912, "INPUTS", { tam: 9, esp: 2.4, ancla: "start" });
+  var i;
+  for (i = 0; i < 8; i++) {
+    var x = 390 + i * 90;
+    var numero = 8 - i;
+    texto(g, x, 840, "" + numero, { tam: 8.5, color: "#3f5230" });
+    ficha(g, x, 856, 8.5, "salidaGrabador" + numero, "Rec Device Out " + numero, "grabador", "salida");
+    texto(g, x, 896, "" + numero, { tam: 8.5, color: "#3f5230" });
+    ficha(g, x, 912, 8.5, "entradaGrabador" + numero, "Rec Device In " + numero, "grabador", "entrada");
+  }
+}
+
+function armarComputadora(capa) {
+  var g = nodo("g", { id: "grupoComputadora", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 300, y: 975, width: 74, height: 182, rx: 7, fill: "url(#grisTorre)", stroke: "#5a5a5a", "stroke-width": 1.6 }, g);
+  nodo("rect", { x: 312, y: 990, width: 50, height: 8, rx: 2, fill: "#6f6f6f", stroke: "#4a4a4a", "stroke-width": 0.8 }, g);
+  puertoUsb(g, 326, 1022, "usbTorre", "USB de la computadora", "computadora");
+  nodo("circle", { cx: 337, cy: 1076, r: 5.5, fill: "#9c9c9c", stroke: "#5a5a5a", "stroke-width": 1.2 }, g);
+  nodo("circle", { cx: 337, cy: 1094, r: 4, fill: "#8a8a8a", stroke: "#5a5a5a", "stroke-width": 1.2 }, g);
+
+  nodo("path", { d: "M 417 1144 L 495 1144 L 478 1114 L 434 1114 Z", fill: "url(#grisTorre)", stroke: "#6a6a6a", "stroke-width": 1.4 }, g);
+  nodo("rect", { x: 442, y: 1096, width: 28, height: 20, fill: "#b3b3b3", stroke: "#6a6a6a", "stroke-width": 1.2 }, g);
+  nodo("rect", { x: 383, y: 978, width: 146, height: 120, rx: 9, fill: "url(#grisTorre)", stroke: "#5a5a5a", "stroke-width": 1.6 }, g);
+  nodo("rect", { x: 396, y: 990, width: 120, height: 95, rx: 3, fill: "url(#pantallaAzul)", stroke: "#3a3a3a", "stroke-width": 1.2 }, g);
+  texto(g, 456, 1050, "DAW", { fuente: "'JetBrains Mono', monospace", tam: 34, peso: 700, color: "#101010" });
+
+  nodo("path", { d: "M 533 1108 Q 515 1094 503 1108", fill: "none", stroke: "#8a8a8a", "stroke-width": 1.6 }, g);
+  nodo("ellipse", { cx: 547, cy: 1112, rx: 15, ry: 10, fill: "#e3e3e3", stroke: "#7d7d7d", "stroke-width": 1.3 }, g);
+  nodo("line", { x1: 547, y1: 1102, x2: 547, y2: 1108, stroke: "#7d7d7d", "stroke-width": 1 }, g);
+}
+function muestraFicha(padre, x, y, tipo, color) {
+  var g = nodo("g", { transform: "translate(" + x + "," + y + ")" }, padre);
+  if (tipo === "usb") {
+    nodo("rect", { x: 0, y: -4.5, width: 14, height: 9, rx: 2, fill: color, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+    nodo("rect", { x: -11, y: -3.5, width: 11, height: 7, rx: 1, fill: "url(#metalClaro)", stroke: "#4a4a4a", "stroke-width": 1 }, g);
+    nodo("rect", { x: -8.5, y: -1.5, width: 5, height: 3, fill: "#141414" }, g);
+    return;
+  }
+  if (tipo === "xlr3") {
+    nodo("rect", { x: 0, y: -5, width: 14, height: 10, rx: 2, fill: color, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+    nodo("rect", { x: -13, y: -6, width: 13, height: 12, rx: 3, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 1.1 }, g);
+    nodo("circle", { cx: -8.5, cy: -2, r: 1.5, fill: "#181818" }, g);
+    nodo("circle", { cx: -8.5, cy: 2, r: 1.5, fill: "#181818" }, g);
+    nodo("circle", { cx: -4.5, cy: 0, r: 1.5, fill: "#181818" }, g);
+    return;
+  }
+  nodo("rect", { x: 0, y: -4, width: 14, height: 8, rx: 2, fill: color, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+  nodo("rect", { x: -11, y: -2.4, width: 11, height: 4.8, rx: 1.6, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+  nodo("line", { x1: -7.5, y1: -2.4, x2: -7.5, y2: 2.4, stroke: "#3a3a3a", "stroke-width": 0.9 }, g);
+  nodo("line", { x1: -4.5, y1: -2.4, x2: -4.5, y2: 2.4, stroke: "#3a3a3a", "stroke-width": 0.9 }, g);
+}
+
+function armarLeyenda(capa) {
+  var g = nodo("g", { id: "grupoLeyenda", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 1590, y: 8, width: 440, height: 222, rx: 10, fill: "url(#cremaPanel)", stroke: "#cbb79c", "stroke-width": 1.4 }, g);
+  texto(g, 1810, 34, "TIPOS DE CONECTORES", { tam: 10, esp: 2, color: "#8B6F47" });
+  nodo("line", { x1: 1610, y1: 44, x2: 2010, y2: 44, stroke: "#d9c8b0", "stroke-width": 1 }, g);
+  var lista = [
+    ["trs", "Plug TRS", "Env\u00edos, retornos, inserts, tape y monitoreo"],
+    ["xlr3", "XLR3", "Micr\u00f3fono al preamplificador de la consola"],
+    ["usb", "USB", "De la Computadora (DAW) hacia el Disp. de grabacion"],
+    ["trs", "Cable Y", "Insert: send y return en un solo conector"]
+  ];
+  for (var i = 0; i < lista.length; i++) {
+    var y = 72 + i * 32;
+    muestraFicha(g, 1628, y, lista[i][0], tintaCable);
+    texto(g, 1660, y + 3.5, lista[i][1], { tam: 9.5, ancla: "start", color: "#2C2416" });
+    texto(g, 1740, y + 3.5, lista[i][2], { tam: 8.5, ancla: "start", peso: 400, color: "#7d6a4d" });
+  }
+  nodo("line", { x1: 1610, y1: 190, x2: 2010, y2: 190, stroke: "#d9c8b0", "stroke-width": 1 }, g);
+  texto(g, 1810, 208, "El monitoreo es activo: no hay etapa de amplificacion de potencia.", { tam: 8.5, peso: 400, color: "#7d6a4d" });
+  nodo("rect", { x: 1590, y: 255, width: 440, height: 165, rx: 10, fill: "url(#cremaPanel)", stroke: "#cbb79c", "stroke-width": 1.4 }, g);
+  texto(g, 1810, 281, "C\u00d3MO SE REALIZA UNA CONEXI\u00d3N", { tam: 10, esp: 2, color: "#8B6F47" });
+  nodo("line", { x1: 1610, y1: 291, x2: 2010, y2: 291, stroke: "#d9c8b0", "stroke-width": 1 }, g);
+  var pasos = [
+    "Agarr\u00e1 un extremo del cable y arrastrala hasta el dispositivo.",
+    "Los conectores compatibles se marcan con un anillo verde.",
+    "Luego agarr\u00e1 el otro extremo para liberar ese conector.",
+    "Toc\u00e1 un equipo y ves correr la se\u00f1al por sus cables."
+  ];
+  for (var p = 0; p < pasos.length; p++) {
+    texto(g, 1626, 316 + p * 24, "\u00b7", { tam: 12, ancla: "start", color: "#B85C50" });
+    texto(g, 1640, 316 + p * 24, pasos[p], { tam: 8.5, ancla: "start", peso: 400, color: "#7d6a4d" });
+  }
+}
+
+function armarDiagnostico(capa) {
+  var g = nodo("g", { id: "grupoDiagnostico", filter: "url(#sombraEquipo)" }, capa);
+  nodo("rect", { x: 1590, y: 445, width: 440, height: 262, rx: 10, fill: "url(#bandejaOscura)", stroke: "#171208", "stroke-width": 1.6 }, g);
+  texto(g, 1810, 471, "DIAGN\u00d3STICO", { tam: 10, esp: 2, color: "#e6d7c2" });
+  nodo("line", { x1: 1610, y1: 481, x2: 2010, y2: 481, stroke: "rgba(230,215,194,0.25)", "stroke-width": 1 }, g);
+  var lista = [
+    ["monitoreo", "Monitoreo", "Control Room Out al sistema de monitoreo"],
+    ["reproduccion", "Reproducci\u00f3n de se\u00f1al", "Rec Device Out a Tape In de la consola"],
+    ["usb", "Conexi\u00f3n USB", "Computadora al dispositivo de grabaci\u00f3n"],
+    ["paralelo", "Proceso en paralelo", "Reverb por Aux 1, retorno a Line In de canales 7 y 8"],
+    ["serie", "Proceso en serie", "Procesador de din\u00e1mica a canales 1 y 4 por Insert con cable Y"]
+  ];
+  for (var i = 0; i < lista.length; i++) {
+    var y = 511 + i * 40;
+    nodo("rect", { x: 1608, y: y - 15, width: 404, height: 34, rx: 5, fill: "rgba(255,255,255,0.035)" }, g);
+    nodo("circle", { cx: 1630, cy: y, r: 9.5, fill: "rgba(0,0,0,0.5)", stroke: "#0f0b05", "stroke-width": 1.4 }, g);
+    var led = nodo("circle", { cx: 1630, cy: y, r: 5.6, fill: "#3a3a32" }, g);
+    var halo = nodo("circle", { cx: 1630, cy: y, r: 10, fill: "none", stroke: "#3a3a32", "stroke-width": 2, opacity: 0 }, g);
+    var etiqueta = texto(g, 1652, y - 2, lista[i][1], { tam: 9.5, ancla: "start", color: "rgba(230,215,194,0.55)" });
+    var detalle = texto(g, 1652, y + 10, lista[i][2], { tam: 8, ancla: "start", peso: 400, color: "#9BB08F" });
+    detalle.setAttribute("opacity", 0);
+    var cuenta = texto(g, 2004, y + 2, "", { tam: 9, ancla: "end", fuente: "'JetBrains Mono', monospace", color: "rgba(230,215,194,0.5)" });
+    lucesDiagnostico[lista[i][0]] = { led: led, halo: halo, etiqueta: etiqueta, detalle: detalle, cuenta: cuenta };
+  }
+}
+
+function prenderLuz(clave, encendida, marca) {
+  var luz = lucesDiagnostico[clave];
+  if (!luz) {
+    return;
+  }
+  luz.led.setAttribute("fill", encendida ? "#9BB08F" : "#3a3a32");
+  luz.halo.setAttribute("stroke", "#9BB08F");
+  luz.halo.setAttribute("opacity", encendida ? 0.42 : 0);
+  luz.etiqueta.setAttribute("fill", encendida ? "#f1e6d4" : "rgba(230,215,194,0.55)");
+  luz.detalle.setAttribute("opacity", encendida ? 1 : 0);
+  luz.cuenta.textContent = marca || "";
+  luz.cuenta.setAttribute("fill", encendida ? "#9BB08F" : "rgba(230,215,194,0.5)");
+}
+
+function clavija(padre, cx, cy) {
+  nodo("circle", { cx: cx, cy: cy, r: 5.5, fill: "#6b4c33", stroke: "#3f2c1c", "stroke-width": 1.2 }, padre);
+  nodo("circle", { cx: cx - 1.6, cy: cy - 1.8, r: 1.6, fill: "rgba(253,248,243,0.4)" }, padre);
+}
+
+function armarRack(capa) {
+  var g = nodo("g", { id: "grupoRack", filter: "url(#sombraRack)" }, capa);
+  nodo("rect", { x: 1180, y: 92, width: 390, height: 738, rx: 14, fill: "url(#maderaRack)", stroke: "#5f4530", "stroke-width": 2 }, g);
+  nodo("rect", { x: 1192, y: 104, width: 366, height: 714, rx: 10, fill: "none", stroke: "rgba(253,248,243,0.3)", "stroke-width": 1.2 }, g);
+  texto(g, 1375, 128, "PANEL DE CABLES", { tam: 11, esp: 1.6, color: "#FDF8F3" });
+  return g;
+}
+
+function rotuloSeccion(padre, y, titulo) {
+  texto(padre, 1375, y, titulo, { tam: 9.5, esp: 2.2, color: "rgba(253,248,243,0.82)" });
+  nodo("line", { x1: 1206, y1: y + 9, x2: 1544, y2: y + 9, stroke: "rgba(253,248,243,0.3)", "stroke-width": 1 }, padre);
+}
+function controlesTramo(ax, ay, bx, by, cuelgue) {
+  var dx = bx - ax;
+  var dy = by - ay;
+  var tramo = Math.sqrt(dx * dx + dy * dy);
+  var holgura = 30 + tramo * 0.09;
+  if (holgura < 20) {
+    holgura = 20;
+  }
+  if (holgura > cuelgue) {
+    holgura = cuelgue;
+  }
+  return {
+    c1x: ax + dx * 0.3,
+    c1y: ay + holgura,
+    c2x: bx - dx * 0.3,
+    c2y: by + holgura
+  };
+}
+
+function trazoTramo(ax, ay, bx, by, k) {
+  return "M " + ax.toFixed(1) + " " + ay.toFixed(1) +
+         " C " + k.c1x.toFixed(1) + " " + k.c1y.toFixed(1) +
+         ", " + k.c2x.toFixed(1) + " " + k.c2y.toFixed(1) +
+         ", " + bx.toFixed(1) + " " + by.toFixed(1);
+}
+
+function anguloEntre(px, py, cx, cy) {
+  return Math.atan2(cy - py, cx - px) * 180 / Math.PI;
+}
+
+function nudoDelY(cable) {
+  var mx = (cable.b.x + cable.c.x) / 2;
+  var my = (cable.b.y + cable.c.y) / 2;
+  return { x: (cable.a.x + mx) / 2, y: (cable.a.y + my) / 2 + 20 };
+}
+
+function geometriaCable(cable) {
+  if (!cable.esY) {
+    var k = controlesTramo(cable.a.x, cable.a.y, cable.b.x, cable.b.y, cable.cuelgue);
+    return {
+      trazo: trazoTramo(cable.a.x, cable.a.y, cable.b.x, cable.b.y, k),
+      anguloA: anguloEntre(cable.a.x, cable.a.y, k.c1x, k.c1y),
+      anguloB: anguloEntre(cable.b.x, cable.b.y, k.c2x, k.c2y)
+    };
+  }
+  var n = nudoDelY(cable);
+  var ka = controlesTramo(cable.a.x, cable.a.y, n.x, n.y, cable.cuelgue);
+  var kb = controlesTramo(n.x, n.y, cable.b.x, cable.b.y, cable.cuelgue);
+  var kc = controlesTramo(n.x, n.y, cable.c.x, cable.c.y, cable.cuelgue);
+  return {
+    trazo: trazoTramo(cable.a.x, cable.a.y, n.x, n.y, ka) + " " +
+           trazoTramo(n.x, n.y, cable.b.x, cable.b.y, kb) + " " +
+           trazoTramo(n.x, n.y, cable.c.x, cable.c.y, kc),
+    nudo: n,
+    anguloA: anguloEntre(cable.a.x, cable.a.y, ka.c1x, ka.c1y),
+    anguloB: anguloEntre(cable.b.x, cable.b.y, kb.c2x, kb.c2y),
+    anguloC: anguloEntre(cable.c.x, cable.c.y, kc.c2x, kc.c2y)
+  };
+}
+
+function dibujarPunta(padre, tipo, letra) {
+  var g = nodo("g", { class: "puntaCable" }, padre);
+  nodo("circle", { cx: 0, cy: 0, r: 15, fill: "transparent" }, g);
+  if (tipo === "usb") {
+    nodo("rect", { x: -1, y: -4.5, width: 12, height: 9, rx: 2, fill: tintaCable, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+    nodo("rect", { x: -11, y: -3.5, width: 10.5, height: 7, rx: 1, fill: "url(#metalClaro)", stroke: "#4a4a4a", "stroke-width": 1 }, g);
+    nodo("rect", { x: -8.5, y: -1.5, width: 5, height: 3, fill: "#141414" }, g);
+    return g;
+  }
+  if (tipo === "xlr3") {
+    nodo("rect", { x: -1, y: -5, width: 12, height: 10, rx: 2, fill: tintaCable, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+    nodo("rect", { x: -13, y: -6, width: 12.5, height: 12, rx: 3, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 1.1 }, g);
+    nodo("circle", { cx: -9, cy: -2, r: 1.4, fill: "#181818" }, g);
+    nodo("circle", { cx: -9, cy: 2, r: 1.4, fill: "#181818" }, g);
+    nodo("circle", { cx: -5, cy: 0, r: 1.4, fill: "#181818" }, g);
+    return g;
+  }
+  nodo("rect", { x: -1, y: -4, width: 12, height: 8, rx: 2, fill: tintaCable, stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+  nodo("rect", { x: -11, y: -2.4, width: 10.5, height: 4.8, rx: 1.6, fill: "url(#metalFicha)", stroke: "#2b2b2b", "stroke-width": 0.9 }, g);
+  nodo("line", { x1: -7.5, y1: -2.4, x2: -7.5, y2: 2.4, stroke: "#3a3a3a", "stroke-width": 0.9 }, g);
+  nodo("line", { x1: -4.5, y1: -2.4, x2: -4.5, y2: 2.4, stroke: "#3a3a3a", "stroke-width": 0.9 }, g);
+  if (letra) {
+    nodo("rect", { x: 1, y: -9.5, width: 14, height: 9, rx: 2, fill: "#f2ece2", stroke: "#2b2b2b", "stroke-width": 0.7 }, g);
+    texto(g, 8, -2.6, letra, { tam: 6.5, color: "#2C2416" });
+  }
+  return g;
+}
+
+function aCoordenadasLienzo(evento) {
+  var m = lienzo.getScreenCTM().inverse();
+  var p = lienzo.createSVGPoint();
+  p.x = evento.clientX;
+  p.y = evento.clientY;
+  return p.matrixTransform(m);
+}
+
+function liberarPunta(cable, lado) {
+  var extremo = cable[lado];
+  if (extremo.punto) {
+    extremo.punto.tomadoPor = null;
+    extremo.punto = null;
+  }
+}
+
+function marcarCandidatos(cable) {
+  var capa = document.getElementById("capaRealces");
+  for (var i = 0; i < puntosConexion.length; i++) {
+    var p = puntosConexion[i];
+    if (p.tomadoPor || p.tipo !== cable.tipo) {
+      continue;
+    }
+    nodo("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: p.tipo === "xlr3" ? 20 : 13.5,
+      fill: "none",
+      stroke: "#9BB08F",
+      "stroke-width": 2.6,
+      "pointer-events": "none"
+    }, capa);
+  }
+}
+
+function limpiarCandidatos() {
+  var capa = document.getElementById("capaRealces");
+  while (capa.firstChild) {
+    capa.removeChild(capa.firstChild);
+  }
+}
+
+function puntoCercano(cable, x, y) {
+  var mejor = null;
+  var mejorDist = 26;
+  for (var i = 0; i < puntosConexion.length; i++) {
+    var p = puntosConexion[i];
+    if (p.tomadoPor || p.tipo !== cable.tipo) {
+      continue;
+    }
+    var dx = p.x - x;
+    var dy = p.y - y;
+    var d = Math.sqrt(dx * dx + dy * dy);
+    if (d < mejorDist) {
+      mejorDist = d;
+      mejor = p;
+    }
+  }
+  return mejor;
+}
+
+function volverAlReposo(cable, lado) {
+  var destino = cable.reposo[lado];
+  cable[lado].x = destino.x;
+  cable[lado].y = destino.y;
+}
+
+function enlazarPunta(cable, lado, elemento) {
+  elemento.addEventListener("pointerdown", function (evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
+    apagarFlujo();
+    elemento.classList.add("agarrada");
+    avisarHotPlug(cable, lado);
+    liberarPunta(cable, lado);
+    arrastre = { cable: cable, lado: lado, elemento: elemento };
+    marcarCandidatos(cable);
+    var pos = aCoordenadasLienzo(evento);
+    cable[lado].x = pos.x;
+    cable[lado].y = pos.y;
+    refrescarCables();
+    revisarTodo();
+    if (elemento.setPointerCapture) {
+      elemento.setPointerCapture(evento.pointerId);
+    }
+  });
+}
+
+function avisarHotPlug(cable, lado) {
+  if (cable.tipo !== "xlr3" || !cable[lado].punto) {
+    return;
+  }
+  var p = cable[lado].punto;
+  if (p.equipo !== "consola") {
+    return;
+  }
+  var canal = parseInt(p.id.replace("canal", ""), 10);
+  if (canal && fantasmas[canal - 1]) {
+    ultimoDetalle = "Sacaste el XLR3 del canal " + canal + " con +48V arriba: eso larga un golpe fuerte al monitoreo. Baj\u00e1 el fantasma antes de desconectar.";
+    return;
+  }
+  ultimoDetalle = "";
+}
+
+function nacerCable(capa, receta) {
+  var sombras = document.getElementById("capaSombrasCables");
+  var cable = {
+    id: receta.id,
+    tipo: receta.tipo,
+    rotulo: receta.rotulo,
+    cuelgue: receta.cuelgue,
+    esY: receta.esY === true,
+    extremos: receta.esY ? ["a", "b", "c"] : ["a", "b"],
+    a: { x: receta.reposo.a.x, y: receta.reposo.a.y, punto: null },
+    b: { x: receta.reposo.b.x, y: receta.reposo.b.y, punto: null },
+    reposo: receta.reposo
+  };
+  if (cable.esY) {
+    cable.c = { x: receta.reposo.c.x, y: receta.reposo.c.y, punto: null };
+  }
+  cable.sombraAncha = nodo("path", {
+    fill: "none", stroke: "rgba(44,36,22,0.11)", "stroke-width": 10,
+    "stroke-linecap": "round", transform: "translate(6,10)"
+  }, sombras);
+  cable.sombraCorta = nodo("path", {
+    fill: "none", stroke: "rgba(44,36,22,0.22)", "stroke-width": 6,
+    "stroke-linecap": "round", transform: "translate(4,7)"
+  }, sombras);
+  cable.fondo = nodo("path", {
+    fill: "none", stroke: "#0f0c06", "stroke-width": 5.8, "stroke-linecap": "round"
+  }, capa);
+  cable.trazo = nodo("path", {
+    fill: "none", stroke: tintaCable, "stroke-width": 4.6, "stroke-linecap": "round"
+  }, capa);
+  cable.brillo = nodo("path", {
+    fill: "none", stroke: "rgba(255,255,255,0.3)", "stroke-width": 1.4,
+    "stroke-linecap": "round", transform: "translate(-0.4,-1.4)"
+  }, capa);
+  cable.pulso = nodo("path", {
+    fill: "none", stroke: "#F5EBE0", "stroke-width": 3, "stroke-linecap": "round",
+    "stroke-dasharray": "12 32", opacity: 0, class: "pulso"
+  }, capa);
+  if (cable.esY) {
+    cable.nudo = nodo("circle", { r: 6, fill: "#1a150d", stroke: "#0f0c06", "stroke-width": 1.2 }, capa);
+  }
+  cable.nodoA = dibujarPunta(capa, cable.tipo, receta.esY ? "INS" : null);
+  cable.nodoB = dibujarPunta(capa, cable.tipo, receta.esY ? "SND" : null);
+  enlazarPunta(cable, "a", cable.nodoA);
+  enlazarPunta(cable, "b", cable.nodoB);
+  if (cable.esY) {
+    cable.nodoC = dibujarPunta(capa, cable.tipo, "RTN");
+    enlazarPunta(cable, "c", cable.nodoC);
+  }
+  cables.push(cable);
+}
+
+function armarCables(capa) {
+  var rack = document.getElementById("grupoRack");
+  var colIzq = [1217, 1307, 1397, 1487];
+  var colDer = [1263, 1353, 1443, 1533];
+  var i;
+  var col;
+  var fila;
+  var centro;
+
+  rotuloSeccion(rack, 150, "PLUG TRS");
+  var filasTrs = [190, 285, 380, 475];
+  for (i = 0; i < 16; i++) {
+    col = i % 4;
+    fila = filasTrs[Math.floor(i / 4)];
+    centro = (colIzq[col] + colDer[col]) / 2;
+    texto(rack, centro, fila - 18, "TRS " + (i + 1), { tam: 8, color: "#FDF8F3" });
+    clavija(rack, colIzq[col], fila);
+    clavija(rack, colDer[col], fila);
+    nacerCable(capa, {
+      id: "trs" + (i + 1),
+      tipo: "trs",
+      rotulo: "Plug TRS " + (i + 1),
+      cuelgue: 46,
+      reposo: { a: { x: colIzq[col], y: fila }, b: { x: colDer[col], y: fila } }
+    });
+  }
+
+  rotuloSeccion(rack, 533, "XLR3");
+  for (i = 0; i < 4; i++) {
+    centro = (colIzq[i] + colDer[i]) / 2;
+    texto(rack, centro, 555, "XLR3 " + (i + 1), { tam: 8, color: "#FDF8F3" });
+    clavija(rack, colIzq[i], 573);
+    clavija(rack, colDer[i], 573);
+    nacerCable(capa, {
+      id: "cableXlr" + (i + 1),
+      tipo: "xlr3",
+      rotulo: "XLR3 " + (i + 1),
+      cuelgue: 46,
+      reposo: { a: { x: colIzq[i], y: 573 }, b: { x: colDer[i], y: 573 } }
+    });
+  }
+
+  rotuloSeccion(rack, 631, "CABLE Y PARA INSERT");
+  for (i = 0; i < 2; i++) {
+    centro = (colIzq[i * 2] + colDer[i * 2 + 1]) / 2;
+    texto(rack, centro, 653, "Cable Y " + (i + 1), { tam: 8, color: "#FDF8F3" });
+    clavija(rack, centro - 40, 671);
+    clavija(rack, centro + 4, 671);
+    clavija(rack, centro + 40, 671);
+    nacerCable(capa, {
+      id: "insertY" + (i + 1),
+      tipo: "trs",
+      rotulo: "Cable Y " + (i + 1),
+      cuelgue: 38,
+      esY: true,
+      reposo: {
+        a: { x: centro - 40, y: 671 },
+        b: { x: centro + 4, y: 671 },
+        c: { x: centro + 40, y: 671 }
+      }
+    });
+  }
+
+  rotuloSeccion(rack, 729, "USB");
+  centro = (colIzq[0] + colDer[0]) / 2;
+  texto(rack, centro, 751, "USB 1", { tam: 8, color: "#FDF8F3" });
+  clavija(rack, colIzq[0], 769);
+  clavija(rack, colDer[0], 769);
+  nacerCable(capa, {
+    id: "usbUno",
+    tipo: "usb",
+    rotulo: "USB 1",
+    cuelgue: 40,
+    reposo: { a: { x: colIzq[0], y: 769 }, b: { x: colDer[0], y: 769 } }
+  });
+}
+
+function armarBocas(svg) {
+  var capa = nodo("g", { id: "capaBocas" }, svg);
+  for (var i = 0; i < puntosConexion.length; i++) {
+    var p = puntosConexion[i];
+    var b = nodo("circle", {
+      cx: p.x, cy: p.y, r: p.tipo === "xlr3" ? 15 : 9,
+      fill: "transparent", class: "boca"
+    }, capa);
+    var t = nodo("title", {}, b);
+    t.textContent = p.rotulo;
+  }
+}
+
+function refrescarCables() {
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    var geo = geometriaCable(c);
+    c.sombraAncha.setAttribute("d", geo.trazo);
+    c.sombraCorta.setAttribute("d", geo.trazo);
+    c.fondo.setAttribute("d", geo.trazo);
+    c.trazo.setAttribute("d", geo.trazo);
+    c.brillo.setAttribute("d", geo.trazo);
+    c.pulso.setAttribute("d", geo.trazo);
+    c.nodoA.setAttribute("transform", "translate(" + c.a.x.toFixed(1) + "," + c.a.y.toFixed(1) +
+      ") rotate(" + geo.anguloA.toFixed(1) + ")");
+    c.nodoB.setAttribute("transform", "translate(" + c.b.x.toFixed(1) + "," + c.b.y.toFixed(1) +
+      ") rotate(" + geo.anguloB.toFixed(1) + ")");
+    if (c.esY) {
+      c.nodoC.setAttribute("transform", "translate(" + c.c.x.toFixed(1) + "," + c.c.y.toFixed(1) +
+        ") rotate(" + geo.anguloC.toFixed(1) + ")");
+      c.nudo.setAttribute("cx", geo.nudo.x.toFixed(1));
+      c.nudo.setAttribute("cy", geo.nudo.y.toFixed(1));
+    }
+  }
+}
+
+function moverArrastre(evento) {
+  if (arrastre) {
+    evento.preventDefault();
+    var pos = aCoordenadasLienzo(evento);
+    arrastre.cable[arrastre.lado].x = pos.x;
+    arrastre.cable[arrastre.lado].y = pos.y;
+    refrescarCables();
+    return;
+  }
+  if (paneo) {
+    evento.preventDefault();
+    var escala = vista.w / lienzo.clientWidth;
+    vista.x = paneo.vistaX - (evento.clientX - paneo.pantallaX) * escala;
+    vista.y = paneo.vistaY - (evento.clientY - paneo.pantallaY) * escala;
+    aplicarVista();
+  }
+}
+
+function soltarArrastre() {
+  if (paneo) {
+    lienzo.classList.remove("paneando");
+    paneo = null;
+  }
+  if (!arrastre) {
+    return;
+  }
+  var cable = arrastre.cable;
+  var lado = arrastre.lado;
+  var extremo = cable[lado];
+  var destino = puntoCercano(cable, extremo.x, extremo.y);
+  if (destino) {
+    extremo.x = destino.x;
+    extremo.y = destino.y;
+    extremo.punto = destino;
+    destino.tomadoPor = cable.id;
+    ultimoDetalle = relatarCable(cable);
+  } else {
+    volverAlReposo(cable, lado);
+  }
+  arrastre.elemento.classList.remove("agarrada");
+  arrastre = null;
+  limpiarCandidatos();
+  refrescarCables();
+  apilarEstado();
+  revisarTodo();
+}
+
+function relatarCable(cable) {
+  if (cable.esY) {
+    if (!cable.a.punto) {
+      return "";
+    }
+    var ramas = [];
+    if (cable.b.punto) {
+      ramas.push("send a " + cable.b.punto.rotulo);
+    }
+    if (cable.c.punto) {
+      ramas.push("return desde " + cable.c.punto.rotulo);
+    }
+    if (!ramas.length) {
+      return "";
+    }
+    return cable.rotulo + ": " + cable.a.punto.rotulo + " con " + ramas.join(" y ");
+  }
+  if (!cable.a.punto || !cable.b.punto) {
+    return "";
+  }
+  return cable.rotulo + ": " + cable.a.punto.rotulo + " \u2192 " + cable.b.punto.rotulo;
+}
+function unePuntos(uno, otro) {
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    for (var j = 0; j < c.extremos.length; j++) {
+      for (var k = 0; k < c.extremos.length; k++) {
+        if (j === k) {
+          continue;
+        }
+        var pa = c[c.extremos[j]].punto;
+        var pb = c[c.extremos[k]].punto;
+        if (pa && pb && pa.id === uno && pb.id === otro) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function rutasCumplidas(rutas) {
+  var hechas = 0;
+  for (var i = 0; i < rutas.length; i++) {
+    if (unePuntos(rutas[i][0], rutas[i][1])) {
+      hechas = hechas + 1;
+    }
+  }
+  return hechas;
+}
+
+function seriesArmadas() {
+  var listas = [];
+  for (var i = 0; i < cadenaSerie.length; i++) {
+    var pieza = cadenaSerie[i];
+    for (var j = 0; j < cables.length; j++) {
+      var c = cables[j];
+      if (!c.esY || !c.a.punto || c.a.punto.id !== pieza.insert) {
+        continue;
+      }
+      var entra = c.b.punto && c.b.punto.id === pieza.entra;
+      var vuelve = c.c.punto && c.c.punto.id === pieza.vuelve;
+      if (entra && vuelve) {
+        listas.push(pieza.insert);
+      }
+    }
+  }
+  return listas;
+}
+
+function revisarTodo() {
+  var mon = rutasCumplidas(cadenaMonitoreo);
+  var rep = rutasCumplidas(cadenaReproduccion);
+  var usb = rutasCumplidas(cadenaUsb);
+  var par = rutasCumplidas(cadenaParalelo);
+  var ser = seriesArmadas();
+
+  prenderLuz("monitoreo", mon === cadenaMonitoreo.length, mon + "/2");
+  prenderLuz("reproduccion", rep === cadenaReproduccion.length, rep + "/8");
+  prenderLuz("usb", usb === cadenaUsb.length, usb + "/1");
+  prenderLuz("paralelo", par === cadenaParalelo.length, par + "/3");
+  prenderLuz("serie", ser.length === cadenaSerie.length, ser.length + "/2");
+
+  var puestos = 0;
+  for (var i = 0; i < cables.length; i++) {
+    var lleno = true;
+    for (var j = 0; j < cables[i].extremos.length; j++) {
+      if (!cables[i][cables[i].extremos[j]].punto) {
+        lleno = false;
+      }
+    }
+    if (lleno) {
+      puestos = puestos + 1;
+    }
+  }
+  var logrados = 0;
+  if (mon === cadenaMonitoreo.length) {
+    logrados = logrados + 1;
+  }
+  if (rep === cadenaReproduccion.length) {
+    logrados = logrados + 1;
+  }
+  if (usb === cadenaUsb.length) {
+    logrados = logrados + 1;
+  }
+  if (par === cadenaParalelo.length) {
+    logrados = logrados + 1;
+  }
+  if (ser.length === cadenaSerie.length) {
+    logrados = logrados + 1;
+  }
+
+  var linea = "<b>" + logrados + " de 5</b> objetivos &middot; " + puestos + " cables en uso";
+  var mudos = micsSinFantasma();
+  if (mudos.length) {
+    linea = linea + "<br>Condensador sin +48V en " + (mudos.length === 1 ? "el canal " : "los canales ") + mudos.join(", ");
+  }
+  if (ultimoDetalle) {
+    linea = linea + "<br><em>" + ultimoDetalle + "</em>";
+  }
+  avisoCaja.innerHTML = linea;
+  refrescarBotones();
+  if (enEsquema) {
+    pintarEsquema();
+  }
+}
+
+function micsSinFantasma() {
+  var mudos = [];
+  for (var c = 0; c < 8; c++) {
+    var p = buscarPunto("canal" + (c + 1) + "MicIn");
+    if (p && p.tomadoPor && !fantasmas[c]) {
+      mudos.push(c + 1);
+    }
+  }
+  return mudos;
+}
+
+function apagarFlujo() {
+  equipoIluminado = "";
+  for (var i = 0; i < cables.length; i++) {
+    cables[i].pulso.classList.remove("corriendo");
+  }
+}
+
+function encenderFlujo(equipo) {
+  if (equipoIluminado === equipo) {
+    apagarFlujo();
+    revisarTodo();
+    return;
+  }
+  apagarFlujo();
+  equipoIluminado = equipo;
+  var tocados = 0;
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    var pega = false;
+    for (var j = 0; j < c.extremos.length; j++) {
+      var p = c[c.extremos[j]].punto;
+      if (p && p.equipo === equipo) {
+        pega = true;
+      }
+    }
+    if (pega) {
+      c.pulso.classList.add("corriendo");
+      tocados = tocados + 1;
+    }
+  }
+  var nombres = {
+    monitores: "el sistema de monitoreo", consola: "la consola",
+    grabador: "el dispositivo de grabaci\u00f3n", computadora: "la computadora",
+    microfonos: "los micr\u00f3fonos", reverb: "el procesador de reverb",
+    compresor: "el procesador de din\u00e1mica"
+  };
+  ultimoDetalle = tocados > 0
+    ? "Se\u00f1al viva: " + tocados + (tocados === 1 ? " cable llega a " : " cables llegan a ") + nombres[equipo]
+    : "No hay ning\u00fan cable en " + nombres[equipo];
+  revisarTodo();
+}
+
+function tapaSensible(equipo, x, y, ancho, alto) {
+  var capa = document.getElementById("capaTapas");
+  var t = nodo("rect", {
+    x: x, y: y, width: ancho, height: alto,
+    fill: "transparent", class: "tapaEquipo"
+  }, capa);
+  t.addEventListener("click", function () {
+    encenderFlujo(equipo);
+  });
+}
+
+function armarTapas(svg) {
+  nodo("g", { id: "capaTapas" }, svg);
+  tapaSensible("monitores", 20, 8, 695, 230);
+  tapaSensible("microfonos", 740, 8, 420, 230);
+  tapaSensible("compresor", 15, 270, 565, 140);
+  tapaSensible("reverb", 600, 270, 560, 140);
+  tapaSensible("consola", 15, 440, 1145, 350);
+  tapaSensible("grabador", 15, 810, 1145, 135);
+  tapaSensible("computadora", 300, 975, 260, 182);
+}
+
+var cajasEsquema = [
+  { equipo: "microfonos", nombre: "Micr\u00f3fonos", x: 90, y: 500, ancho: 190, alto: 90 },
+  { equipo: "consola", nombre: "Consola Anal\u00f3gica", x: 400, y: 470, ancho: 220, alto: 150 },
+  { equipo: "compresor", nombre: "Procesador (Din\u00e1mica)", x: 750, y: 250, ancho: 210, alto: 90 },
+  { equipo: "reverb", nombre: "Procesador (Reverb)", x: 750, y: 760, ancho: 210, alto: 90 },
+  { equipo: "grabador", nombre: "Dispositivo de Grabaci\u00f3n", x: 1120, y: 500, ancho: 220, alto: 110 },
+  { equipo: "computadora", nombre: "Computadora / DAW", x: 1500, y: 760, ancho: 220, alto: 90 },
+  { equipo: "monitores", nombre: "Monitoreo activo", x: 1500, y: 250, ancho: 220, alto: 90 }
+];
+
+function cajaDe(equipo) {
+  for (var i = 0; i < cajasEsquema.length; i++) {
+    if (cajasEsquema[i].equipo === equipo) {
+      return cajasEsquema[i];
+    }
+  }
+  return null;
+}
+
+function orientarPar(uno, otro) {
+  if (uno.flujo === "salida") {
+    return { desde: uno, hasta: otro };
+  }
+  if (otro.flujo === "salida") {
+    return { desde: otro, hasta: uno };
+  }
+  if (uno.flujo === "insert") {
+    return { desde: uno, hasta: otro };
+  }
+  if (otro.flujo === "insert") {
+    return { desde: otro, hasta: uno };
+  }
+  return { desde: uno, hasta: otro };
+}
+
+function vinculosDelPatch() {
+  var mapa = {};
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    var tocados = [];
+    for (var j = 0; j < c.extremos.length; j++) {
+      var p = c[c.extremos[j]].punto;
+      if (p) {
+        tocados.push(p);
+      }
+    }
+    for (var a = 0; a < tocados.length; a++) {
+      for (var b = a + 1; b < tocados.length; b++) {
+        if (tocados[a].equipo === tocados[b].equipo) {
+          continue;
+        }
+        var par = orientarPar(tocados[a], tocados[b]);
+        var desde = par.desde;
+        var hasta = par.hasta;
+        var clave = desde.equipo + ">" + hasta.equipo;
+        if (!mapa[clave]) {
+          mapa[clave] = { desde: desde.equipo, hasta: hasta.equipo, cuenta: 0, insert: false };
+        }
+        mapa[clave].cuenta = mapa[clave].cuenta + 1;
+        if (c.esY) {
+          mapa[clave].insert = true;
+        }
+      }
+    }
+  }
+  return mapa;
+}
+
+function bordeCaja(caja, haciaX, haciaY) {
+  var cx = caja.x + caja.ancho / 2;
+  var cy = caja.y + caja.alto / 2;
+  var dx = haciaX - cx;
+  var dy = haciaY - cy;
+  if (dx === 0 && dy === 0) {
+    return { x: cx, y: cy };
+  }
+  var porX = dx !== 0 ? (caja.ancho / 2 + 5) / Math.abs(dx) : 9999;
+  var porY = dy !== 0 ? (caja.alto / 2 + 5) / Math.abs(dy) : 9999;
+  var e = Math.min(porX, porY);
+  return { x: cx + dx * e, y: cy + dy * e };
+}
+
+function pintarEsquema() {
+  var capa = document.getElementById("capaEsquema");
+  while (capa.firstChild) {
+    capa.removeChild(capa.firstChild);
+  }
+  texto(capa, 900, 90, "FLUJO DE SE\u00d1AL", { tam: 22, esp: 5, color: "#8B6F47" });
+  texto(capa, 900, 118, "Diagrama de bloques generado a partir del patch armado", { tam: 12, peso: 400, color: "#9d8a6c" });
+
+  var mapa = vinculosDelPatch();
+  var clave;
+  for (clave in mapa) {
+    var v = mapa[clave];
+    var ca = cajaDe(v.desde);
+    var cb = cajaDe(v.hasta);
+    if (!ca || !cb) {
+      continue;
+    }
+    var ax = ca.x + ca.ancho / 2;
+    var ay = ca.y + ca.alto / 2;
+    var bx = cb.x + cb.ancho / 2;
+    var by = cb.y + cb.alto / 2;
+    var tramo = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    if (tramo < 1) {
+      continue;
+    }
+    var mx = (ax + bx) / 2 - (by - ay) / tramo * 52;
+    var my = (ay + by) / 2 + (bx - ax) / tramo * 52;
+    var salida = bordeCaja(ca, mx, my);
+    var llegada = bordeCaja(cb, mx, my);
+    nodo("path", {
+      d: "M " + salida.x.toFixed(1) + " " + salida.y.toFixed(1) +
+         " Q " + mx.toFixed(1) + " " + my.toFixed(1) + " " +
+         llegada.x.toFixed(1) + " " + llegada.y.toFixed(1),
+      fill: "none",
+      stroke: v.insert ? "#B85C50" : "#8B6F47",
+      "stroke-width": 2.6,
+      "stroke-dasharray": v.insert ? "9 5" : "none",
+      "marker-end": "url(#puntaFlecha)"
+    }, capa);
+    var leyenda = v.cuenta + (v.insert ? (v.cuenta === 1 ? " insert" : " inserts") : (v.cuenta === 1 ? " cable" : " cables"));
+    var ancho = leyenda.length * 5.4 + 14;
+    nodo("rect", {
+      x: mx - ancho / 2, y: my - 10, width: ancho, height: 19, rx: 4,
+      fill: "#FDF8F3", stroke: v.insert ? "#d9a89f" : "#cbb79c", "stroke-width": 1
+    }, capa);
+    texto(capa, mx, my + 3.5, leyenda, { tam: 9, color: v.insert ? "#a04b3f" : "#6b5a3e" });
+  }
+
+  for (var i = 0; i < cajasEsquema.length; i++) {
+    var caja = cajasEsquema[i];
+    var vivo = false;
+    for (clave in mapa) {
+      if (mapa[clave].desde === caja.equipo || mapa[clave].hasta === caja.equipo) {
+        vivo = true;
+      }
+    }
+    nodo("rect", {
+      x: caja.x, y: caja.y, width: caja.ancho, height: caja.alto, rx: 10,
+      fill: vivo ? "#F5EBE0" : "rgba(245,235,224,0.4)",
+      stroke: vivo ? "#B85C50" : "#cbb79c",
+      "stroke-width": vivo ? 2.4 : 1.4
+    }, capa);
+    texto(capa, caja.x + caja.ancho / 2, caja.y + caja.alto / 2 + 5, caja.nombre,
+      { tam: 13, color: vivo ? "#2C2416" : "#a89579" });
+  }
+}
+
+function alternarEsquema() {
+  enEsquema = !enEsquema;
+  var capas = ["capaEquipos", "capaBocas", "capaTapas", "capaRealces", "capaSombrasCables", "capaCables"];
+  for (var i = 0; i < capas.length; i++) {
+    document.getElementById(capas[i]).setAttribute("display", enEsquema ? "none" : "inline");
+  }
+  document.getElementById("capaEsquema").setAttribute("display", enEsquema ? "inline" : "none");
+  document.getElementById("botonEsquema").textContent = enEsquema ? "Ver diagrama f\u00edsico" : "Ver diagrama de bloques";
+  if (enEsquema) {
+    pintarEsquema();
+    vista = { x: 0, y: 0, w: 1800, h: 1100 };
+  } else {
+    vista = { x: 0, y: 0, w: 2040, h: 1200 };
+  }
+  aplicarVista();
+}
+
+function retratoActual() {
+  var foto = { cables: [], fantasmas: fantasmas.slice(0) };
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    var uno = { id: c.id, a: null, b: null, c: null };
+    uno.a = c.a.punto ? c.a.punto.id : null;
+    uno.b = c.b.punto ? c.b.punto.id : null;
+    if (c.esY) {
+      uno.c = c.c.punto ? c.c.punto.id : null;
+    }
+    foto.cables.push(uno);
+  }
+  return JSON.stringify(foto);
+}
+
+function calzarRetrato(crudo) {
+  var foto = JSON.parse(crudo);
+  var i;
+  for (i = 0; i < cables.length; i++) {
+    for (var j = 0; j < cables[i].extremos.length; j++) {
+      liberarPunta(cables[i], cables[i].extremos[j]);
+      volverAlReposo(cables[i], cables[i].extremos[j]);
+    }
+  }
+  for (i = 0; i < foto.cables.length; i++) {
+    var cable = buscarCable(foto.cables[i].id);
+    if (!cable) {
+      continue;
+    }
+    for (var k = 0; k < cable.extremos.length; k++) {
+      var lado = cable.extremos[k];
+      var idPunto = foto.cables[i][lado];
+      if (!idPunto) {
+        continue;
+      }
+      var punto = buscarPunto(idPunto);
+      if (!punto || punto.tomadoPor) {
+        continue;
+      }
+      cable[lado].punto = punto;
+      cable[lado].x = punto.x;
+      cable[lado].y = punto.y;
+      punto.tomadoPor = cable.id;
+    }
+  }
+  if (foto.fantasmas) {
+    for (i = 0; i < 8; i++) {
+      fantasmas[i] = foto.fantasmas[i] === true;
+      pintarFantasma(i);
+    }
+  }
+  refrescarCables();
+  revisarTodo();
+}
+
+function apilarEstado() {
+  var foto = retratoActual();
+  if (pilaAtras.length && pilaAtras[pilaAtras.length - 1] === foto) {
+    return;
+  }
+  pilaAtras.push(foto);
+  if (pilaAtras.length > 60) {
+    pilaAtras.shift();
+  }
+  pilaAdelante = [];
+}
+
+function deshacer() {
+  if (pilaAtras.length < 2) {
+    return;
+  }
+  pilaAdelante.push(pilaAtras.pop());
+  apagarFlujo();
+  ultimoDetalle = "Se deshizo el \u00faltimo movimiento";
+  calzarRetrato(pilaAtras[pilaAtras.length - 1]);
+}
+
+function rehacer() {
+  if (!pilaAdelante.length) {
+    return;
+  }
+  var foto = pilaAdelante.pop();
+  pilaAtras.push(foto);
+  apagarFlujo();
+  ultimoDetalle = "Se rehizo el movimiento";
+  calzarRetrato(foto);
+}
+
+function refrescarBotones() {
+  document.getElementById("botonDeshacer").disabled = pilaAtras.length < 2;
+  document.getElementById("botonRehacer").disabled = pilaAdelante.length === 0;
+}
+
+function soltarTodo() {
+  apagarFlujo();
+  for (var i = 0; i < cables.length; i++) {
+    for (var j = 0; j < cables[i].extremos.length; j++) {
+      liberarPunta(cables[i], cables[i].extremos[j]);
+      volverAlReposo(cables[i], cables[i].extremos[j]);
+    }
+  }
+  ultimoDetalle = "";
+  refrescarCables();
+  apilarEstado();
+  revisarTodo();
+}
+
+function cableLibreDeTipo(tipo, quiereY) {
+  for (var i = 0; i < cables.length; i++) {
+    var c = cables[i];
+    if (c.tipo !== tipo || c.esY !== quiereY) {
+      continue;
+    }
+    var libre = true;
+    for (var j = 0; j < c.extremos.length; j++) {
+      if (c[c.extremos[j]].punto) {
+        libre = false;
+      }
+    }
+    if (libre) {
+      return c;
+    }
+  }
+  return null;
+}
+
+function enchufar(cable, lado, punto) {
+  if (!punto || punto.tomadoPor) {
+    return false;
+  }
+  cable[lado].punto = punto;
+  cable[lado].x = punto.x;
+  cable[lado].y = punto.y;
+  punto.tomadoPor = cable.id;
+  return true;
+}
+
+function tenderRutas(rutas) {
+  for (var i = 0; i < rutas.length; i++) {
+    var pa = buscarPunto(rutas[i][0]);
+    var pb = buscarPunto(rutas[i][1]);
+    if (!pa || !pb || pa.tomadoPor || pb.tomadoPor) {
+      continue;
+    }
+    var cable = cableLibreDeTipo(pa.tipo, false);
+    if (!cable) {
+      continue;
+    }
+    enchufar(cable, "a", pa);
+    enchufar(cable, "b", pb);
+  }
+}
+
+function tenderSerie() {
+  for (var i = 0; i < cadenaSerie.length; i++) {
+    var pieza = cadenaSerie[i];
+    var pa = buscarPunto(pieza.insert);
+    var pb = buscarPunto(pieza.entra);
+    if (!pa || !pb || pa.tomadoPor) {
+      continue;
+    }
+    var cable = cableLibreDeTipo("trs", true);
+    if (!cable) {
+      continue;
+    }
+    enchufar(cable, "a", pa);
+    enchufar(cable, "b", pb);
+    enchufar(cable, "c", buscarPunto(pieza.vuelve));
+  }
+}
+
+function consignaElegida() {
+  var clave = document.getElementById("selectorConsigna").value;
+  for (var i = 0; i < consignas.length; i++) {
+    if (consignas[i].id === clave) {
+      return consignas[i];
+    }
+  }
+  return consignas[0];
+}
+
+function resolverConsigna() {
+  var c = consignaElegida();
+  soltarTodo();
+  if (c.rutas.length) {
+    tenderRutas(c.rutas);
+  }
+  if (c.conSerie) {
+    tenderSerie();
+  }
+  if (c.id === "todo" || c.id === "microfonos") {
+    for (var i = 0; i < 8; i++) {
+      fantasmas[i] = false;
+      pintarFantasma(i);
+    }
+  }
+  ultimoDetalle = "Resuelto: " + c.titulo;
+  refrescarCables();
+  apilarEstado();
+  revisarTodo();
+  verificarConsigna();
+}
+
+function verificarConsigna() {
+  var c = consignaElegida();
+  var caja = document.getElementById("resultadoConsigna");
+  var faltan = [];
+  var i;
+  for (i = 0; i < c.rutas.length; i++) {
+    if (!unePuntos(c.rutas[i][0], c.rutas[i][1])) {
+      faltan.push(buscarPunto(c.rutas[i][0]).rotulo + " \u2192 " + buscarPunto(c.rutas[i][1]).rotulo);
+    }
+  }
+  if (c.conSerie) {
+    var puestas = seriesArmadas();
+    for (i = 0; i < cadenaSerie.length; i++) {
+      var esta = false;
+      for (var j = 0; j < puestas.length; j++) {
+        if (puestas[j] === cadenaSerie[i].insert) {
+          esta = true;
+        }
+      }
+      if (!esta) {
+        faltan.push("Cable Y en " + buscarPunto(cadenaSerie[i].insert).rotulo + " hacia el compresor");
+      }
+    }
+  }
+  if (!faltan.length) {
+    caja.innerHTML = "<b>Consigna cumplida.</b> " + c.detalle;
+    return;
+  }
+  var total = c.rutas.length + (c.conSerie ? cadenaSerie.length : 0);
+  var salida = "<b>" + (total - faltan.length) + " de " + total + " conexiones.</b><ul>";
+  for (i = 0; i < faltan.length && i < 6; i++) {
+    salida = salida + "<li>" + faltan[i] + "</li>";
+  }
+  if (faltan.length > 6) {
+    salida = salida + "<li>y " + (faltan.length - 6) + " m\u00e1s</li>";
+  }
+  caja.innerHTML = salida + "</ul>";
+}
+
+function armarSelectorConsignas() {
+  var sel = document.getElementById("selectorConsigna");
+  for (var i = 0; i < consignas.length; i++) {
+    var op = document.createElement("option");
+    op.value = consignas[i].id;
+    op.textContent = consignas[i].titulo;
+    sel.appendChild(op);
+  }
+  sel.addEventListener("change", function () {
+    document.getElementById("resultadoConsigna").textContent = consignaElegida().detalle;
+  });
+  document.getElementById("resultadoConsigna").textContent = consignas[0].detalle;
+}
+
+function textoPatchList() {
+  var lineas = [];
+  lineas.push("PATCH LIST - Conectividad de Estudio - Mimetika");
+  lineas.push("Generado: " + new Date().toLocaleString("es-AR"));
+  lineas.push("");
+  var puestos = 0;
+  for (var i = 0; i < cables.length; i++) {
+    var relato = relatarCable(cables[i]);
+    if (relato) {
+      lineas.push("  " + relato);
+      puestos = puestos + 1;
+    }
+  }
+  if (!puestos) {
+    lineas.push("  Sin conexiones armadas.");
+  }
+  lineas.push("");
+  var vivos = [];
+  for (i = 0; i < 8; i++) {
+    if (fantasmas[i]) {
+      vivos.push(i + 1);
+    }
+  }
+  lineas.push("Phantom Power +48V: " + (vivos.length ? "canales " + vivos.join(", ") : "ningun canal"));
+  lineas.push("Cables en uso: " + puestos + " de " + cables.length);
+  lineas.push("");
+  lineas.push("OBJETIVOS");
+  lineas.push("  Monitoreo: " + rutasCumplidas(cadenaMonitoreo) + "/2");
+  lineas.push("  Reproduccion de senal: " + rutasCumplidas(cadenaReproduccion) + "/8");
+  lineas.push("  Conexion USB: " + rutasCumplidas(cadenaUsb) + "/1");
+  lineas.push("  Proceso en paralelo (reverb): " + rutasCumplidas(cadenaParalelo) + "/3");
+  lineas.push("  Proceso en serie (dinamica): " + seriesArmadas().length + "/2");
+  return lineas.join("\n");
+}
+
+function bajarArchivo(bloque, nombre) {
+  var enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(bloque);
+  enlace.download = nombre;
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+  URL.revokeObjectURL(enlace.href);
+}
+
+function exportarPatchList() {
+  bajarArchivo(new Blob([textoPatchList()], { type: "text/plain;charset=utf-8" }), "patch-list-mimetika.txt");
+  ultimoDetalle = "Patch list exportada";
+  revisarTodo();
+}
+
+function svgSuelto() {
+  var copia = lienzo.cloneNode(true);
+  copia.setAttribute("viewBox", "0 0 2040 1200");
+  copia.setAttribute("width", 2040);
+  copia.setAttribute("height", 1200);
+  copia.setAttribute("xmlns", NS);
+  var fondo = document.createElementNS(NS, "rect");
+  fondo.setAttribute("x", 0);
+  fondo.setAttribute("y", 0);
+  fondo.setAttribute("width", 2040);
+  fondo.setAttribute("height", 1200);
+  fondo.setAttribute("fill", "#F5EBE0");
+  copia.insertBefore(fondo, copia.firstChild);
+  var sueltos = copia.querySelectorAll(".pulso");
+  for (var i = 0; i < sueltos.length; i++) {
+    sueltos[i].setAttribute("opacity", 0);
+  }
+  return new XMLSerializer().serializeToString(copia);
+}
+
+function exportarSvg() {
+  bajarArchivo(new Blob([svgSuelto()], { type: "image/svg+xml;charset=utf-8" }), "conectividad-mimetika.svg");
+  ultimoDetalle = "Diagrama exportado en SVG";
+  revisarTodo();
+}
+
+function lienzoAImagen(listo) {
+  var crudo = svgSuelto();
+  var url = "data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent(crudo)));
+  var imagen = new Image();
+  imagen.onload = function () {
+    var tela = document.createElement("canvas");
+    tela.width = 2040;
+    tela.height = 1200;
+    var pincel = tela.getContext("2d");
+    pincel.fillStyle = "#F5EBE0";
+    pincel.fillRect(0, 0, 2040, 1200);
+    pincel.drawImage(imagen, 0, 0);
+    listo(tela);
+  };
+  imagen.onerror = function () {
+    listo(null);
+  };
+  imagen.src = url;
+}
+
+function exportarPng() {
+  lienzoAImagen(function (tela) {
+    if (!tela) {
+      ultimoDetalle = "No se pudo armar el PNG";
+      revisarTodo();
+      return;
+    }
+    tela.toBlob(function (bloque) {
+      bajarArchivo(bloque, "conectividad-mimetika.png");
+      ultimoDetalle = "Diagrama exportado en PNG";
+      revisarTodo();
+    });
+  });
+}
+
+function exportarPdf() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    ultimoDetalle = "No carg\u00f3 la librer\u00eda de PDF: prob\u00e1 con PNG o revis\u00e1 la conexi\u00f3n";
+    revisarTodo();
+    return;
+  }
+  lienzoAImagen(function (tela) {
+    if (!tela) {
+      ultimoDetalle = "No se pudo armar el PDF";
+      revisarTodo();
+      return;
+    }
+    var doc = new window.jspdf.jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    doc.setFontSize(13);
+    doc.text("Conectividad de Estudio - Mimetika", 14, 14);
+    doc.addImage(tela.toDataURL("image/png"), "PNG", 14, 20, 269, 158);
+    doc.addPage();
+    doc.setFontSize(9);
+    var lineas = textoPatchList().split("\n");
+    var y = 16;
+    for (var i = 0; i < lineas.length; i++) {
+      doc.text(lineas[i], 14, y);
+      y = y + 5;
+      if (y > 195) {
+        doc.addPage();
+        y = 16;
+      }
+    }
+    doc.save("conectividad-mimetika.pdf");
+    ultimoDetalle = "Diagrama y patch list exportados en PDF";
+    revisarTodo();
+  });
+}
+
+function abrirBase(listo) {
+  if (!window.indexedDB) {
+    listo(null);
+    return;
+  }
+  var pedido = window.indexedDB.open("mimetikaConectividad", 2);
+  pedido.onupgradeneeded = function (evento) {
+    var db = evento.target.result;
+    if (!db.objectStoreNames.contains("patches")) {
+      db.createObjectStore("patches", { keyPath: "nombre" });
+    }
+  };
+  pedido.onsuccess = function (evento) {
+    baseDatos = evento.target.result;
+    listo(baseDatos);
+  };
+  pedido.onerror = function () {
+    listo(null);
+  };
+}
+
+function listarPresets() {
+  var sel = document.getElementById("selectorPreset");
+  while (sel.firstChild) {
+    sel.removeChild(sel.firstChild);
+  }
+  if (!baseDatos) {
+    var av = document.createElement("option");
+    av.textContent = "Sin almacenamiento";
+    sel.appendChild(av);
+    return;
+  }
+  var trans = baseDatos.transaction("patches", "readonly");
+  var pedido = trans.objectStore("patches").getAllKeys();
+  pedido.onsuccess = function () {
+    var claves = pedido.result;
+    if (!claves.length) {
+      var vacio = document.createElement("option");
+      vacio.textContent = "Todav\u00eda no hay patches";
+      sel.appendChild(vacio);
+      return;
+    }
+    for (var i = 0; i < claves.length; i++) {
+      var op = document.createElement("option");
+      op.value = claves[i];
+      op.textContent = claves[i];
+      sel.appendChild(op);
+    }
+  };
+}
+
+function guardarPreset() {
+  var campo = document.getElementById("nombrePreset");
+  var nombre = campo.value.trim();
+  if (!nombre) {
+    ultimoDetalle = "Pon\u00e9le un nombre al patch antes de guardar";
+    revisarTodo();
+    return;
+  }
+  if (!baseDatos) {
+    ultimoDetalle = "Este navegador no deja guardar patches";
+    revisarTodo();
+    return;
+  }
+  var trans = baseDatos.transaction("patches", "readwrite");
+  trans.objectStore("patches").put({ nombre: nombre, foto: retratoActual() });
+  trans.oncomplete = function () {
+    campo.value = "";
+    listarPresets();
+    ultimoDetalle = "Patch guardado como " + nombre;
+    revisarTodo();
+  };
+}
+
+function cargarPreset() {
+  var sel = document.getElementById("selectorPreset");
+  if (!baseDatos || !sel.value) {
+    return;
+  }
+  var trans = baseDatos.transaction("patches", "readonly");
+  var pedido = trans.objectStore("patches").get(sel.value);
+  pedido.onsuccess = function () {
+    if (!pedido.result) {
+      return;
+    }
+    apagarFlujo();
+    calzarRetrato(pedido.result.foto);
+    apilarEstado();
+    ultimoDetalle = "Patch cargado: " + sel.value;
+    revisarTodo();
+  };
+}
+
+function borrarPreset() {
+  var sel = document.getElementById("selectorPreset");
+  if (!baseDatos || !sel.value) {
+    return;
+  }
+  var nombre = sel.value;
+  var trans = baseDatos.transaction("patches", "readwrite");
+  trans.objectStore("patches").delete(nombre);
+  trans.oncomplete = function () {
+    listarPresets();
+    ultimoDetalle = "Patch borrado: " + nombre;
+    revisarTodo();
+  };
+}
+
+function aplicarVista() {
+  lienzo.setAttribute("viewBox", vista.x.toFixed(1) + " " + vista.y.toFixed(1) + " " +
+    vista.w.toFixed(1) + " " + vista.h.toFixed(1));
+}
+
+function escalarVista(factor, focoX, focoY) {
+  var nuevoAncho = vista.w * factor;
+  if (nuevoAncho < 420) {
+    nuevoAncho = 420;
+  }
+  if (nuevoAncho > 3000) {
+    nuevoAncho = 3000;
+  }
+  var real = nuevoAncho / vista.w;
+  vista.x = focoX - (focoX - vista.x) * real;
+  vista.y = focoY - (focoY - vista.y) * real;
+  vista.w = vista.w * real;
+  vista.h = vista.h * real;
+  aplicarVista();
+}
+
+function encuadrar() {
+  vista = enEsquema ? { x: 0, y: 0, w: 1800, h: 1100 } : { x: 0, y: 0, w: 2040, h: 1200 };
+  aplicarVista();
+}
+
+function rodarRueda(evento) {
+  evento.preventDefault();
+  var pos = aCoordenadasLienzo(evento);
+  escalarVista(evento.deltaY > 0 ? 1.14 : 0.88, pos.x, pos.y);
+}
+
+function arrancarPaneo(evento) {
+  if (arrastre) {
+    return;
+  }
+  paneo = {
+    pantallaX: evento.clientX,
+    pantallaY: evento.clientY,
+    vistaX: vista.x,
+    vistaY: vista.y
+  };
+  lienzo.classList.add("paneando");
+}
+
+function iniciar() {
+  var caja = document.getElementById("lienzoCaja");
+  avisoCaja = document.getElementById("aviso");
+  var svg = nodo("svg", { viewBox: "0 0 2040 1200", xmlns: NS, id: "lienzoDiagrama" });
+  lienzo = svg;
+  armarDefiniciones(svg);
+  var capa = nodo("g", { id: "capaEquipos" }, svg);
+  armarMonitores(capa);
+  armarMicrofonos(capa);
+  armarCompresor(capa);
+  armarReverb(capa);
+  armarConsola(capa);
+  armarGrabador(capa);
+  armarComputadora(capa);
+  armarLeyenda(capa);
+  armarDiagnostico(capa);
+  armarRack(capa);
+  armarTapas(svg);
+  armarBocas(svg);
+  nodo("g", { id: "capaRealces" }, svg);
+  nodo("g", { id: "capaSombrasCables" }, svg);
+  var capaCables = nodo("g", { id: "capaCables" }, svg);
+  nodo("g", { id: "capaEsquema", display: "none" }, svg);
+  caja.appendChild(svg);
+  armarCables(capaCables);
+  refrescarCables();
+  armarSelectorConsignas();
+  apilarEstado();
+  revisarTodo();
+
+  window.addEventListener("pointermove", moverArrastre, { passive: false });
+  window.addEventListener("pointerup", soltarArrastre);
+  window.addEventListener("pointercancel", soltarArrastre);
+  svg.addEventListener("pointerdown", arrancarPaneo);
+  svg.addEventListener("wheel", rodarRueda, { passive: false });
+  document.getElementById("botonSoltar").addEventListener("click", soltarTodo);
+  document.getElementById("botonVerificar").addEventListener("click", verificarConsigna);
+  document.getElementById("botonResolver").addEventListener("click", resolverConsigna);
+  document.getElementById("botonEsquema").addEventListener("click", alternarEsquema);
+  document.getElementById("botonTxt").addEventListener("click", exportarPatchList);
+  document.getElementById("botonSvg").addEventListener("click", exportarSvg);
+  document.getElementById("botonPng").addEventListener("click", exportarPng);
+  document.getElementById("botonPdf").addEventListener("click", exportarPdf);
+  document.getElementById("botonGuardar").addEventListener("click", guardarPreset);
+  document.getElementById("botonCargar").addEventListener("click", cargarPreset);
+  document.getElementById("botonBorrar").addEventListener("click", borrarPreset);
+  document.getElementById("botonDeshacer").addEventListener("click", deshacer);
+  document.getElementById("botonRehacer").addEventListener("click", rehacer);
+  document.getElementById("botonAcercar").addEventListener("click", function () {
+    escalarVista(0.82, vista.x + vista.w / 2, vista.y + vista.h / 2);
+  });
+  document.getElementById("botonAlejar").addEventListener("click", function () {
+    escalarVista(1.22, vista.x + vista.w / 2, vista.y + vista.h / 2);
+  });
+  document.getElementById("botonEncuadrar").addEventListener("click", encuadrar);
+  abrirBase(function () {
+    listarPresets();
+  });
+}
+
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>
